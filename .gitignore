@@ -1,0 +1,5 @@
+.python-version
+.env
+all_cards*
+__pycache__
+venv

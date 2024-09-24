@@ -1,0 +1,6 @@
+git+https://github.com/weaviate/weaviate-recommend-python-client.git
+python-dotenv
+tqdm
+wasabi
+uvicorn
+fastapi

@@ -1,0 +1,1 @@
+This is the backend of the Magic Recommender project. It's written in Python and uses FastAPI and (Weaviate Recommend Python Client)[https://github.com/weaviate/weaviate-recommend-python-client/tree/main].
