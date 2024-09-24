@@ -7,6 +7,7 @@ import {
   getCurrentIPAddress,
   getCardRecommendations,
   getUserRecommendations,
+  addInteraction,
 } from "./api";
 import { CardType } from "./types";
 import { useState, useEffect } from "react";
@@ -59,6 +60,7 @@ export default function Home() {
     if (cardToAdd) {
       setCardInDeck([...cardInDeck, cardToAdd]);
       setCards(cards.filter((card) => card.card_id !== card_id));
+      addInteraction(card_id, userId, "added");
       getCardRecommendations(1, [card_id], userId).then((cards) => {
         if (cards) {
           setCards((prevCards) => [...prevCards, ...cards.cards]);
@@ -105,24 +107,22 @@ export default function Home() {
   const card_size = 250;
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="flex p-3">
-        <div className="flex justify-between items-center w-full">
-          <div className="flex items-center">
-            <img
-              src="/img/mtg-logo.svg"
-              alt="Magic: The Gathering Logo"
-              width={120}
-            />
+    <div className=" flex flex-col">
+      <div className="flex justify-center items-center">
+        <div className="flex flex-col p-4 gap-8 h-screen bg-zinc-700 w-2/3 overflow-y-auto">
+          <div className="flex justify-between items-center w-full ">
+            <div className="flex items-center">
+              <img
+                src="/img/mtg-logo.svg"
+                alt="Magic: The Gathering Logo"
+                width={120}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="font-light text-xs">Powered by</p>
+              <img src="/img/weaviate.svg" alt="Weaviate Logo" width={30} />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <p className="font-light text-xs">Powered by</p>
-            <img src="/img/weaviate.svg" alt="Weaviate Logo" width={30} />
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-center items-center h-screen">
-        <div className="flex flex-col p-12 gap-8 h-screen bg-zinc-700 w-2/3 overflow-y-auto">
           <div className="flex justify-center items-center w-full gap-2">
             <div className="flex flex-row  justify-center items-center gap-2 w-full">
               {cardInDeck.length > 0 && (
@@ -144,7 +144,7 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-6 w-full items-center justify-center">
+          <div className="flex flex-wrap gap-6 w-full h-full items-center justify-center">
             {cards &&
               cards.map((card) => (
                 <Card
@@ -165,7 +165,7 @@ export default function Home() {
             <p className="text-lg font-bold">Deck ({cardInDeck.length})</p>
             <p className="text-xs font-light opacity-50">User ID: {userId}</p>
           </div>
-          <div className="grid grid-cols-3 justify-center items-center gap-2 p-4">
+          <div className="grid grid-cols-3 justify-center items-center w-full gap-2 p-4">
             {cardInDeck.map((card) => (
               <Card
                 image_uri={card.image_uri}

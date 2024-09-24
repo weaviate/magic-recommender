@@ -43,7 +43,7 @@ export const getCurrentIPAddress = async (): Promise<string | null> => {
   }
 };
 
-// Endpoint /api/cards
+// Endpoint /cards
 export const getCards = async (
   page: number,
   pageSize: number,
@@ -70,7 +70,7 @@ export const getCards = async (
   }
 };
 
-// Endpoint /api/random
+// Endpoint /random
 export const getRandomCards = async (
   pageSize: number,
   userId: string
@@ -96,7 +96,7 @@ export const getRandomCards = async (
   }
 };
 
-// Endpoint /api/card_recommendation
+// Endpoint /card_recommendation
 export const getCardRecommendations = async (
   numberOfCards: number,
   cardIds: string[],
@@ -123,7 +123,7 @@ export const getCardRecommendations = async (
   }
 };
 
-// Endpoint /api/user_recommendation
+// Endpoint /user_recommendation
 export const getUserRecommendations = async (
   numberOfCards: number,
   userId: string
@@ -138,6 +138,33 @@ export const getUserRecommendations = async (
       body: JSON.stringify({
         numberOfCards: numberOfCards,
         userId: userId,
+      }),
+    });
+    const data: CardsResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error retrieving content", error);
+    return null;
+  }
+};
+
+// Endpoint /add_interaction
+export const addInteraction = async (
+  cardId: string,
+  userId: string,
+  interaction: "added" | "discarded"
+): Promise<CardsResponse | null> => {
+  try {
+    const host = await detectHost();
+    const response = await fetch(`${host}/add_interaction`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        cardId: cardId,
+        userId: userId,
+        interaction: interaction,
       }),
     });
     const data: CardsResponse = await response.json();

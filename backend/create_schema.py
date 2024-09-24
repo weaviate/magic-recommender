@@ -70,9 +70,7 @@ client.create(
     user_properties={"decks": wvcc.DataType.TEXT},
     user_interaction_property_names=[
         "added",
-        "liked",
-        "disliked",
-        "viewed",
+        "discarded",
     ],
     text_search_property_name="oracle_text",
 )

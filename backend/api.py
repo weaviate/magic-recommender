@@ -9,6 +9,7 @@ from .api_types import (
     GetCardsPayload,
     CardRecommendationPayload,
     UserRecommendationPayload,
+    AddInteractionPayload,
 )
 
 import weaviate
@@ -202,6 +203,24 @@ async def user_recommendation(payload: UserRecommendationPayload):
         return JSONResponse(status_code=400, content={"cards": [], "total": 0})
 
 
+@app.post("/add_interaction")
+async def add_interaction(payload: AddInteractionPayload):
+    try:
+        msg.info(
+            f"Adding interaction for user: {payload.userId} and card: {payload.cardId} | {payload.interaction}"
+        )
+
+        await user_check(payload.userId)
+
+        return JSONResponse(
+            status_code=200,
+            content=None,
+        )
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return JSONResponse(status_code=400, content=None)
+
+
 async def get_random_card():
     card_collection = client.collections.get(os.getenv("COLLECTION_NAME"))
 
@@ -228,3 +247,12 @@ async def get_random_card():
     ]
 
     return cards
+
+
+async def user_check(user_id: str):
+    try:
+
+        user = recommender_client.user.get_user(user_id)
+        print(user)
+    except Exception as e:
+        print(f"An error occurred when retrieving user: {str(e)}")

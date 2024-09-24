@@ -1,5 +1,11 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Literal
+
+
+class AddInteractionPayload(BaseModel):
+    userId: str
+    cardId: str
+    interaction: Literal["added", "discarded"]
 
 
 class GetCardsPayload(BaseModel):

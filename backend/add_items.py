@@ -15,7 +15,7 @@ msg.divider("Starting ingestion process")
 
 # Configuration
 train_at = 10000
-start_at = -1
+start_at = 10000
 
 # Get the service URL from the environment variable
 service_url = os.getenv("SERVICE_URL")
@@ -71,25 +71,29 @@ with open(file_path, "r") as file:
             if start_at <= counter:
                 items.append(RecommenderItem(id=card["id"], properties=item_properties))
 
+            if len(items) >= batch_size and not training:
+                response = client.item.add_batch(items)
+                msg.info(response)
+                items = []  # Clear the list after batch insertion
+
             if counter == train_at:
                 training = True
                 response = client.train(overwrite=True)
                 msg.info(response)
 
-                while client.is_training():
-                    msg.info("Training in progress...")
-                    time.sleep(10)  # Wait for 10 seconds before checking again
-                    status = client.train_status()
-                    if status.status == "error":
-                        msg.fail("Training failed!")
+                try:
+                    while client.is_training():
+                        msg.info("Training in progress...")
+                        time.sleep(10)  # Wait for 10 seconds before checking again
+                        status = client.train_status()
+                        if status.status == "error":
+                            msg.fail("Training failed!")
+                            msg.info(status)
+                            exit(1)
                         msg.info(status)
-                        exit(1)
-                    msg.info(status)
-
-            if len(items) >= batch_size and not training:
-                response = client.item.add_batch(items)
-                msg.info(response)
-                items = []  # Clear the list after batch insertion
+                except Exception as e:
+                    msg.fail(f"Error getting training status: {e}")
+                    exit(1)
 
         except json.JSONDecodeError as e:
             msg.warn(f"Error decoding JSON: {e}")
