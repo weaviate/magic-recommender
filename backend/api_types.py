@@ -6,6 +6,11 @@ class AddInteractionPayload(BaseModel):
     userId: str
     cardId: str
     interaction: Literal["added", "discarded"]
+    weight: float
+
+
+class GetInteractionsPayload(BaseModel):
+    userId: str
 
 
 class GetCardsPayload(BaseModel):

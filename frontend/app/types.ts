@@ -29,3 +29,11 @@ export type CardType = {
   edhrec_rank: number;
   cmc: number;
 };
+
+export type Interaction = {
+  item_id: string;
+  name: string;
+  image_uri: string;
+  interaction_property_name: "added" | "discarded";
+  weight: number;
+};

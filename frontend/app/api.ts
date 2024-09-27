@@ -1,4 +1,4 @@
-import { CardsResponse } from "./types";
+import { CardsResponse, Interaction } from "./types";
 import { v5 as uuidv5 } from "uuid";
 
 const NAMESPACE = "10bca8d5-4b85-4a5f-9fb2-5d9c1b9b5e96";
@@ -152,7 +152,8 @@ export const getUserRecommendations = async (
 export const addInteraction = async (
   cardId: string,
   userId: string,
-  interaction: "added" | "discarded"
+  interaction: "added" | "discarded",
+  weight: number
 ): Promise<CardsResponse | null> => {
   try {
     const host = await detectHost();
@@ -165,9 +166,33 @@ export const addInteraction = async (
         cardId: cardId,
         userId: userId,
         interaction: interaction,
+        weight: weight,
       }),
     });
     const data: CardsResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error retrieving content", error);
+    return null;
+  }
+};
+
+// Endpoint /get_interactions
+export const getInteractions = async (
+  userId: string
+): Promise<Interaction[] | null> => {
+  try {
+    const host = await detectHost();
+    const response = await fetch(`${host}/get_interactions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: userId,
+      }),
+    });
+    const data: Interaction[] = await response.json();
     return data;
   } catch (error) {
     console.error("Error retrieving content", error);

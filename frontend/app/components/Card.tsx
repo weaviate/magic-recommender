@@ -92,19 +92,21 @@ const Card: React.FC<CardProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-10 items-center justify-center">
-      <button
-        onClick={() => onClick && onClick(card_id)}
-        className={`flex shadow-2xl justify-center ${
+    <div
+      className="flex flex-col gap-10 items-center justify-center"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onClick={() => onClick(card_id)} // Add this line to handle clicks
+    >
+      <div
+        className={`relative flex shadow-2xl justify-center ${
           preview ? "rounded-lg" : "rounded-2xl"
         }`}
-        style={{ perspective: "2000px", zIndex: selected ? 10 : 1 }}
+        style={{ perspective: "2000px" }}
       >
         <motion.div
           ref={cardRef}
-          className="w-full h-full relative flex overflow-hidden group"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
+          className={`w-full h-full relative flex overflow-hidden group`}
           style={{
             rotateX,
             rotateY,
@@ -131,7 +133,11 @@ const Card: React.FC<CardProps> = ({
             alt="Card image"
             width={width}
             className={`${preview ? "rounded-lg" : "rounded-2xl"}`}
-            style={{ filter: "brightness(1.0)" }}
+            style={{
+              filter: selected
+                ? "brightness(1.1) blur(1px)"
+                : "brightness(0.9)",
+            }}
             onLoad={() => setIsLoading(false)} // Set loading to false when image loads
           />
           {/* Rainbow Holographic Effect Based on Card Rotation */}
@@ -195,29 +201,38 @@ const Card: React.FC<CardProps> = ({
             transition={{ duration: 0.5, ease: "easeInOut" }}
           />
         </motion.div>
-      </button>
-      {!preview && (
-        <div className="flex gap-3 items-center justify-center">
-          {selected && (
-            <div className="flex gap-2">
+        {!preview && selected && (
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: selected ? 1 : 0, y: selected ? 0 : -10 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            <div className="flex gap-2 pointer-events-auto">
               <button
-                onClick={() => onAdd && onAdd(card_id)}
-                className="btn text-xs min-w-[120px] btn-success text-white flex items-center gap-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAdd(card_id);
+                }}
+                className="btn text-xs min-w-[120px] btn-success text-white  flex items-center gap-1 shadow-2xl"
               >
                 <IoMdAddCircle size={12} />
                 <p>Add</p>
               </button>
               <button
-                onClick={() => onDiscard && onDiscard(card_id)}
-                className="btn text-xs min-w-[120px] btn-error text-white flex items-center gap-1 bg-zinc-600 border-none"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDiscard(card_id);
+                }}
+                className="btn text-xs min-w-[120px] btn-error text-white flex items-center gap-1 bg-zinc-600 border-none shadow-2xl"
               >
                 <IoMdRemoveCircle size={12} />
                 <p>Discard</p>
               </button>
             </div>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 };

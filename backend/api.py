@@ -10,6 +10,7 @@ from .api_types import (
     CardRecommendationPayload,
     UserRecommendationPayload,
     AddInteractionPayload,
+    GetInteractionsPayload,
 )
 
 import weaviate
@@ -17,6 +18,7 @@ from weaviate.client import WeaviateAsyncClient
 from weaviate.auth import AuthApiKey
 from weaviate.classes.init import AdditionalConfig, Timeout
 from weaviate.classes.query import Filter, Sort, MetadataQuery
+from weaviate_recommend.models.data import User
 
 import os
 from pathlib import Path
@@ -212,9 +214,58 @@ async def add_interaction(payload: AddInteractionPayload):
 
         await user_check(payload.userId)
 
+        response = recommender_client.user.add_interaction(
+            user_id=payload.userId,
+            item_id=payload.cardId,
+            interaction_property_name=payload.interaction,
+            weight=payload.weight,
+        )
+
+        print(f"Interaction added: {response}")
+
         return JSONResponse(
             status_code=200,
             content=None,
+        )
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return JSONResponse(status_code=400, content=None)
+
+
+@app.post("/get_interactions")
+async def get_interactions(payload: GetInteractionsPayload):
+    try:
+        msg.info(f"Getting interactions for user: {payload.userId}")
+
+        await user_check(payload.userId)
+
+        try:
+            response = recommender_client.user.get_user_interactions(payload.userId)
+
+            print(f"Interaction: {response}")
+        except Exception as e:
+            print(f"An error when getting interactions: {str(e)}")
+            return JSONResponse(
+                status_code=200,
+                content=[],
+            )
+
+        interactions = []
+        for interaction in response:
+            image_uri, card_name = await get_image_uri(interaction.item_id)
+            interactions.append(
+                {
+                    "item_id": interaction.item_id,
+                    "name": card_name,
+                    "interaction_property_name": interaction.interaction_property_name,
+                    "weight": interaction.weight,
+                    "image_uri": image_uri,
+                }
+            )
+
+        return JSONResponse(
+            status_code=200,
+            content=interactions,
         )
     except Exception as e:
         print(f"An error occurred: {str(e)}")
@@ -250,9 +301,28 @@ async def get_random_card():
 
 
 async def user_check(user_id: str):
-    try:
 
-        user = recommender_client.user.get_user(user_id)
-        print(user)
+    try:
+        recommender_client.user.get_user(user_id)
+        print(f"User Exists")
     except Exception as e:
-        print(f"An error occurred when retrieving user: {str(e)}")
+        try:
+            print(f"Creating new user")
+            new_user = User(id=user_id, properties={"decks": ""})
+            response = recommender_client.user.create_user(new_user)
+            print(f"User created: {response}")
+
+        except Exception as e:
+            print(f"An error occurred when creating user: {str(e)}")
+
+
+async def get_image_uri(card_id: str):
+    try:
+        card_collection = client.collections.get(os.getenv("COLLECTION_NAME"))
+        response = await card_collection.query.fetch_object_by_id(uuid=card_id)
+        image_uri = response.properties["image_uri"]
+        card_name = response.properties["name"]
+        return image_uri, card_name
+    except Exception as e:
+        print(f"An error occurred while fetching image URI: {str(e)}")
+        return ""
