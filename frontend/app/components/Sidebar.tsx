@@ -17,6 +17,7 @@ interface SidebarProps {
   handleRemoveFromDeck: (card_id: string) => void;
   handleDeckClick: (card_id: string) => void;
   interactions: Interaction[];
+  handleClearDeck: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -24,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   userId,
   handleRemoveFromDeck,
   handleDeckClick,
+  handleClearDeck,
   interactions,
 }) => {
   const [currentView, setCurrentView] = useState<
@@ -78,6 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <p className="text-xs">Interactions ({interactions.length})</p>
         </button>
       </div>
+      <div className="divider m-1"></div>
       {currentView === "Info" && <InfoSide />}
       {currentView === "Deck" && (
         <Deck
@@ -85,6 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           userId={userId}
           handleRemoveFromDeck={handleRemoveFromDeck}
           handleDeckClick={handleDeckClick}
+          handleClearDeck={handleClearDeck}
         />
       )}
       {currentView === "Interactions" && (

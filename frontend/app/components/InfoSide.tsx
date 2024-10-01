@@ -27,8 +27,8 @@ const InfoSide: React.FC<InfoSideProps> = ({}) => {
       <p className="text-lg font-bold text-white">How to use the demo</p>
 
       <p className="text-xs font-light text-gray-300">
-        You start with three random cards, which you can either discard or add
-        to your deck. Any of these interactions will influence the next
+        You start with a random set of cards, which you can either discard or
+        add to your deck. Any of these interactions will influence the next
         recommendation. The Recommendation button gives you three options,
         either you get recommendation based on all of your cards in the deck,
         get recommendations based on all of your interactions, or get a random

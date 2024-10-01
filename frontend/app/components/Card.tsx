@@ -91,6 +91,17 @@ const Card: React.FC<CardProps> = ({
     setMousePosition({ x: 50, y: 50 });
   };
 
+  if (image_uri === "") {
+    return (
+      <div
+        style={{ width: `${width}px` }}
+        className="flex items-center justify-center"
+      >
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
   return (
     <div
       className="flex flex-col gap-10 items-center justify-center"
@@ -201,7 +212,7 @@ const Card: React.FC<CardProps> = ({
             transition={{ duration: 0.5, ease: "easeInOut" }}
           />
         </motion.div>
-        {!preview && selected && (
+        {selected && (
           <motion.div
             className="absolute inset-0 flex items-center justify-center pointer-events-none"
             initial={{ opacity: 0, y: -10 }}
@@ -209,16 +220,18 @@ const Card: React.FC<CardProps> = ({
             transition={{ duration: 0.2, ease: "easeInOut" }}
           >
             <div className="flex gap-2 pointer-events-auto">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAdd(card_id);
-                }}
-                className="btn text-xs min-w-[120px] btn-success text-white  flex items-center gap-1 shadow-2xl"
-              >
-                <IoMdAddCircle size={12} />
-                <p>Add</p>
-              </button>
+              {!preview && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAdd(card_id);
+                  }}
+                  className="btn text-xs min-w-[120px] btn-success text-white  flex items-center gap-1 shadow-2xl"
+                >
+                  <IoMdAddCircle size={12} />
+                  <p>Add</p>
+                </button>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();

@@ -241,8 +241,6 @@ async def get_interactions(payload: GetInteractionsPayload):
 
         try:
             response = recommender_client.user.get_user_interactions(payload.userId)
-
-            print(f"Interaction: {response}")
         except Exception as e:
             print(f"An error when getting interactions: {str(e)}")
             return JSONResponse(

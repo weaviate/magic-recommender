@@ -36,6 +36,10 @@ export default function Home() {
     setCardInDeck([...cardInDeck, card]);
   };
 
+  const handleClearDeck = () => {
+    setCardInDeck([]);
+  };
+
   const handleDeckClick = (card_id: string) => {};
 
   const card_size = 250;
@@ -67,6 +71,7 @@ export default function Home() {
           interactions={interactions}
           handleRemoveFromDeck={handleRemoveFromDeck}
           handleDeckClick={handleDeckClick}
+          handleClearDeck={handleClearDeck}
         />
       </div>
     </div>

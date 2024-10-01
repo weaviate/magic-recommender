@@ -30,6 +30,33 @@ export type CardType = {
   cmc: number;
 };
 
+export const PlaceholderCard: CardType = {
+  card_id: "",
+  oracle_id: "",
+  name: "",
+  released_at: "",
+  uri: "",
+  scryfall_uri: "",
+  image_uri: "",
+  type_line: "",
+  oracle_text: "",
+  colors: [],
+  color_identity: [],
+  keywords: [],
+  produced_mana: [],
+  set_name: "",
+  rarity: "",
+  power: "",
+  toughness: "",
+  mana_cost: "",
+  loyalty: "",
+  defense: "",
+  life_modifier: "",
+  hand_modifier: "",
+  edhrec_rank: 0,
+  cmc: 0,
+};
+
 export type Interaction = {
   item_id: string;
   name: string;

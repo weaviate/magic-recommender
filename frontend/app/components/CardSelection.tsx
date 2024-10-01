@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { CardType, Interaction } from "@/app/types";
+import { CardType, Interaction, PlaceholderCard } from "@/app/types";
 import Card from "./Card";
 import RecommendationButtons from "./RecommendationButtons";
 
@@ -31,8 +31,8 @@ const CardSelection: React.FC<CardSelectionProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const pageSize = 3;
-  const card_size = 250;
+  const pageSize = 6;
+  const card_size = 230;
 
   const handleCardClick = (card_id: string) => {
     if (selectedCard === card_id) {
@@ -77,23 +77,36 @@ const CardSelection: React.FC<CardSelectionProps> = ({
   };
 
   const handleAddCard = (card_id: string) => {
-    const cardToAdd = cards.find((card) => card.card_id === card_id);
+    const cardIndex = cards.findIndex((card) => card.card_id === card_id);
+    const cardToAdd = cards[cardIndex];
     if (cardToAdd) {
       setCardInDeck(cardToAdd);
-      setCards(cards.filter((card) => card.card_id !== card_id));
-      addInteraction(card_id, userId, "added", 0.8).then(() => {
-        getInteractions(userId).then((newInteractions) => {
-          if (newInteractions) {
-            setInteractions(newInteractions);
+
+      // Remove added card from cards
+      setCards((prevCards) =>
+        prevCards.filter((card) => card.card_id !== card_id)
+      );
+
+      // Add interaction and get a new recommendation
+      Promise.all([
+        addInteraction(card_id, userId, "added", 0.8),
+        getCardRecommendations(1, [card_id], userId),
+      ])
+        .then(([_, newCards]) => {
+          if (newCards && newCards.cards.length > 0) {
+            setCards((prevCards) => [...prevCards, newCards.cards[0]]);
           }
+
+          // Update interactions
+          getInteractions(userId).then((newInteractions) => {
+            if (newInteractions) {
+              setInteractions(newInteractions);
+            }
+          });
+        })
+        .catch((error) => {
+          console.error("Error adding card:", error);
         });
-      });
-      getCardRecommendations(1, [card_id], userId).then((cards) => {
-        if (cards) {
-          setCards((prevCards) => [...prevCards, ...cards.cards]);
-        }
-        setIsLoading(false);
-      });
     }
   };
 
@@ -130,20 +143,18 @@ const CardSelection: React.FC<CardSelectionProps> = ({
   }, [userId]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="relative">
-        <div className="absolute top-0 right-0 p-4">
-          <RecommendationButtons
-            isLoading={isLoading}
-            cardInDeck={cardInDeck}
-            handleDeckRecommendations={handleDeckRecommendations}
-            handleUserRecommendations={handleUserRecommendations}
-            handleRandomCards={handleRandomCards}
-          />
-        </div>
+    <div className="flex flex-col h-full relative">
+      <div className="absolute top-0 right-0 z-10 p-4">
+        <RecommendationButtons
+          isLoading={isLoading}
+          cardInDeck={cardInDeck}
+          handleDeckRecommendations={handleDeckRecommendations}
+          handleUserRecommendations={handleUserRecommendations}
+          handleRandomCards={handleRandomCards}
+        />
       </div>
-      <div className="flex-grow flex items-center justify-center">
-        <div className="flex flex-wrap gap-6 items-center justify-center">
+      <div className="flex-grow flex items-start justify-center pt-16">
+        <div className="flex flex-wrap gap-6 items-start justify-center mt-4">
           {cards &&
             cards.map((card) => (
               <Card
