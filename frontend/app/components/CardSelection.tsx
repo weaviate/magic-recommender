@@ -5,6 +5,8 @@ import { CardType, Interaction, PlaceholderCard } from "@/app/types";
 import Card from "./Card";
 import RecommendationButtons from "./RecommendationButtons";
 
+import Searchbar from "./Searchbar";
+
 import {
   getRandomCards,
   getCardRecommendations,
@@ -16,22 +18,30 @@ import {
 interface CardSelectionProps {
   cardInDeck: CardType[];
   setCardInDeck: (card: CardType) => void;
+  setCardDeck: (cards: CardType[]) => void;
   userId: string;
+  fetchInteractions: (userId: string) => void;
+  numberOfCards: number;
   setInteractions: (interactions: Interaction[]) => void;
+  interactions: Interaction[];
 }
 
 const CardSelection: React.FC<CardSelectionProps> = ({
   cardInDeck,
   setCardInDeck,
+  setCardDeck,
   userId,
+  numberOfCards,
+  fetchInteractions,
   setInteractions,
+  interactions,
 }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [cards, setCards] = useState<CardType[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const pageSize = 6;
+  const pageSize = numberOfCards;
   const card_size = 230;
 
   const handleCardClick = (card_id: string) => {
@@ -96,13 +106,7 @@ const CardSelection: React.FC<CardSelectionProps> = ({
           if (newCards && newCards.cards.length > 0) {
             setCards((prevCards) => [...prevCards, newCards.cards[0]]);
           }
-
-          // Update interactions
-          getInteractions(userId).then((newInteractions) => {
-            if (newInteractions) {
-              setInteractions(newInteractions);
-            }
-          });
+          fetchInteractions(userId);
         })
         .catch((error) => {
           console.error("Error adding card:", error);
@@ -143,15 +147,23 @@ const CardSelection: React.FC<CardSelectionProps> = ({
   }, [userId]);
 
   return (
-    <div className="flex flex-col h-full relative">
-      <div className="absolute top-0 right-0 z-10 p-4">
-        <RecommendationButtons
-          isLoading={isLoading}
-          cardInDeck={cardInDeck}
-          handleDeckRecommendations={handleDeckRecommendations}
-          handleUserRecommendations={handleUserRecommendations}
-          handleRandomCards={handleRandomCards}
+    <div className="flex flex-col h-full w-full relative">
+      <div className="absolute top-0 left-0 right-0 z-10 mt-2 px-12 flex gap-2 justify-start items-start w-full">
+        <Searchbar
+          userId={userId}
+          setCards={setCards}
+          numberOfCards={numberOfCards}
         />
+        <div className="relative">
+          <RecommendationButtons
+            isLoading={isLoading}
+            cardInDeck={cardInDeck}
+            handleDeckRecommendations={handleDeckRecommendations}
+            handleUserRecommendations={handleUserRecommendations}
+            handleRandomCards={handleRandomCards}
+            interactions={interactions}
+          />
+        </div>
       </div>
       <div className="flex-grow flex items-start justify-center pt-16">
         <div className="flex flex-wrap gap-6 items-start justify-center mt-4">

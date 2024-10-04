@@ -8,15 +8,12 @@ interface DeckProps {
   cardInDeck: CardType[];
   userId: string;
   handleRemoveFromDeck: (card_id: string) => void;
-  handleDeckClick: (card_id: string) => void;
   handleClearDeck: () => void;
 }
 
 const Deck: React.FC<DeckProps> = ({
   cardInDeck,
-  userId,
   handleRemoveFromDeck,
-  handleDeckClick,
   handleClearDeck,
 }) => {
   const card_size = 200;
@@ -29,6 +26,11 @@ const Deck: React.FC<DeckProps> = ({
 
   return (
     <div className="flex flex-col justify-center items-center w-full">
+      <div>
+        {cardInDeck.length === 0 && (
+          <p className="text-zinc-700 text-center">No cards in deck</p>
+        )}
+      </div>
       <div className="flex flex-row justify-end items-end w-full p-4 gap-2">
         {cardInDeck.length > 0 && (
           <button
@@ -48,7 +50,7 @@ const Deck: React.FC<DeckProps> = ({
             onClick={handleCardClick}
             selected={selectedCard === card.card_id}
             preview={true}
-            onAdd={handleDeckClick}
+            onAdd={() => {}}
             onDiscard={handleRemoveFromDeck}
           />
         ))}

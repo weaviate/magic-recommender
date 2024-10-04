@@ -3,8 +3,6 @@
 interface InfoSideProps {}
 
 const InfoSide: React.FC<InfoSideProps> = ({}) => {
-  const card_size = 100;
-
   return (
     <div className="justify-start items-start w-full gap-4 flex flex-col p-4">
       <p className="text-lg font-bold text-white">

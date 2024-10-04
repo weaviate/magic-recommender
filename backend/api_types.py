@@ -13,6 +13,13 @@ class GetInteractionsPayload(BaseModel):
     userId: str
 
 
+class SearchCardsPayload(BaseModel):
+    query: str
+    userId: str
+    numberOfCards: int
+    searchType: Literal["recommended", "hybrid"]
+
+
 class GetCardsPayload(BaseModel):
     pageSize: int
     page: int

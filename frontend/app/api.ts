@@ -148,6 +148,35 @@ export const getUserRecommendations = async (
   }
 };
 
+// Endpoint /card_search
+export const getSearchResults = async (
+  query: string,
+  userId: string,
+  numberOfCards: number,
+  searchType: "recommended" | "hybrid"
+): Promise<CardsResponse | null> => {
+  try {
+    const host = await detectHost();
+    const response = await fetch(`${host}/card_search`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: query,
+        userId: userId,
+        numberOfCards: numberOfCards,
+        searchType: searchType,
+      }),
+    });
+    const data: CardsResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error retrieving content", error);
+    return null;
+  }
+};
+
 // Endpoint /add_interaction
 export const addInteraction = async (
   cardId: string,

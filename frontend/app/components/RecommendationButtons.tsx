@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CardType } from "@/app/types";
+import { CardType, Interaction } from "@/app/types";
 import { GiCardDraw, GiCardRandom, GiCardPlay } from "react-icons/gi";
 
 import { FaUserTag } from "react-icons/fa";
@@ -12,6 +12,7 @@ interface RecommendationButtonsProps {
   handleDeckRecommendations: () => void;
   handleUserRecommendations: () => void;
   handleRandomCards: () => void;
+  interactions: Interaction[];
   isLoading: boolean;
 }
 
@@ -20,12 +21,13 @@ const RecommendationButtons: React.FC<RecommendationButtonsProps> = ({
   handleDeckRecommendations,
   handleUserRecommendations,
   handleRandomCards,
+  interactions,
   isLoading,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const buttonClass =
-    "btn text-white bg-zinc-800 hover:text-black  hover:bg-gray-200 text-xs border-none w-full flex items-center justify-evenly";
+    "btn text-white bg-zinc-800 hover:text-black hover:bg-gray-200 text-xs border-none w-full flex items-center justify-evenly";
   const iconClass = "w-[20px] flex justify-center";
 
   const handleRecommendationClick = (action: () => void) => {
@@ -50,28 +52,6 @@ const RecommendationButtons: React.FC<RecommendationButtonsProps> = ({
       </button>
       {isExpanded && (
         <div className="flex flex-col gap-2 animate-fadeIn w-full">
-          {cardInDeck.length > 0 && (
-            <button
-              className={buttonClass}
-              onClick={() =>
-                handleRecommendationClick(handleDeckRecommendations)
-              }
-            >
-              <span className={iconClass}>
-                <GiCardDraw size={20} />
-              </span>
-              <p>Based on Deck</p>
-            </button>
-          )}
-          <button
-            className={buttonClass}
-            onClick={() => handleRecommendationClick(handleUserRecommendations)}
-          >
-            <span className={iconClass}>
-              <FaUserTag size={20} />
-            </span>
-            <p>Based on User</p>
-          </button>
           <button
             className={buttonClass}
             onClick={() => handleRecommendationClick(handleRandomCards)}
@@ -80,6 +60,26 @@ const RecommendationButtons: React.FC<RecommendationButtonsProps> = ({
               <GiCardRandom size={20} />
             </span>
             <p>Random Cards</p>
+          </button>
+          <button
+            className={buttonClass}
+            onClick={() => handleRecommendationClick(handleDeckRecommendations)}
+            disabled={cardInDeck.length === 0}
+          >
+            <span className={iconClass}>
+              <GiCardDraw size={20} />
+            </span>
+            <p>Based on Deck</p>
+          </button>
+          <button
+            className={buttonClass}
+            onClick={() => handleRecommendationClick(handleUserRecommendations)}
+            disabled={interactions.length <= 5}
+          >
+            <span className={iconClass}>
+              <FaUserTag size={20} />
+            </span>
+            <p>Based on User</p>
           </button>
         </div>
       )}

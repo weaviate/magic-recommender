@@ -1,6 +1,6 @@
-from fastapi import FastAPI, WebSocket, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import random
 
@@ -9,24 +9,22 @@ from .api_types import (
     GetCardsPayload,
     CardRecommendationPayload,
     UserRecommendationPayload,
+    SearchCardsPayload,
     AddInteractionPayload,
     GetInteractionsPayload,
 )
 
 import weaviate
-from weaviate.client import WeaviateAsyncClient
 from weaviate.auth import AuthApiKey
 from weaviate.classes.init import AdditionalConfig, Timeout
-from weaviate.classes.query import Filter, Sort, MetadataQuery
+from weaviate.classes.query import Sort
 from weaviate_recommend.models.data import User
 
 import os
-from pathlib import Path
 
 from weaviate_recommend import WeaviateRecommendClient
 
 from dotenv import load_dotenv
-from starlette.websockets import WebSocketDisconnect
 from wasabi import msg  # type: ignore[import]
 
 load_dotenv()
@@ -137,7 +135,7 @@ async def card_recommendation(payload: CardRecommendationPayload):
                 )
         except Exception as e:
             print(f"Recommendation error: {str(e)}")
-            random_card = await get_random_card()
+            random_card = await get_random_cards(1)
             return JSONResponse(
                 status_code=200,
                 content={"cards": random_card, "total": len(random_card)},
@@ -150,6 +148,52 @@ async def card_recommendation(payload: CardRecommendationPayload):
                 "oracle_id": str(recommendation.properties["oracle_id"]),
             }
             for recommendation in recommendations.recommendations
+        ]
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "cards": cards,
+                "total": len(cards),
+            },
+        )
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return JSONResponse(status_code=400, content={"cards": [], "total": 0})
+
+
+@app.post("/card_search")
+async def card_search(payload: SearchCardsPayload):
+    try:
+        msg.info(
+            f"Searching for cards with query: {payload.query} for user: {payload.userId}"
+        )
+
+        try:
+
+            if payload.searchType == "recommended":
+                search_results = recommender_client.search(
+                    text=payload.query,
+                    user_id=payload.userId,
+                    limit=payload.numberOfCards,
+                    influence_factor=0.5,
+                )
+
+        except Exception as e:
+            print(f"Search error: {str(e)}")
+            random_card = await get_random_cards(6)
+            return JSONResponse(
+                status_code=200,
+                content={"cards": random_card, "total": len(random_card)},
+            )
+
+        cards = [
+            {
+                **recommendation.properties,
+                "card_id": str(recommendation.properties["card_id"]),
+                "oracle_id": str(recommendation.properties["oracle_id"]),
+            }
+            for recommendation in search_results.results
         ]
 
         return JSONResponse(
@@ -178,7 +222,7 @@ async def user_recommendation(payload: UserRecommendationPayload):
             )
         except Exception as e:
             print(f"Recommendation error: {str(e)}")
-            random_card = await get_random_card()
+            random_card = await get_random_cards(1)
             return JSONResponse(
                 status_code=200,
                 content={"cards": random_card, "total": len(random_card)},
@@ -270,30 +314,32 @@ async def get_interactions(payload: GetInteractionsPayload):
         return JSONResponse(status_code=400, content=None)
 
 
-async def get_random_card():
+async def get_random_cards(num_cards: int = 1):
     card_collection = client.collections.get(os.getenv("COLLECTION_NAME"))
 
-    offset = random.randint(1, 25000)
-    card_collection = client.collections.get(os.getenv("COLLECTION_NAME"))
     aggregation_response = await card_collection.aggregate.over_all(total_count=True)
 
     if aggregation_response.total_count == 0:
         msg.warn("No cards found")
         return []
 
-    response = await card_collection.query.fetch_objects(
-        limit=1,
-        offset=offset,
-    )
+    cards = []
+    for _ in range(num_cards):
+        offset = random.randint(0, aggregation_response.total_count - 1)
+        response = await card_collection.query.fetch_objects(
+            limit=1,
+            offset=offset,
+        )
 
-    cards = [
-        {
-            **card.properties,
-            "card_id": str(card.properties["card_id"]),
-            "oracle_id": str(card.properties["oracle_id"]),
-        }
-        for card in response.objects
-    ]
+        if response.objects:
+            card = response.objects[0]
+            cards.append(
+                {
+                    **card.properties,
+                    "card_id": str(card.properties["card_id"]),
+                    "oracle_id": str(card.properties["oracle_id"]),
+                }
+            )
 
     return cards
 

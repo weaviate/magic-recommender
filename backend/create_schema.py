@@ -46,6 +46,7 @@ client.create(
         "hand_modifier": wvcc.DataType.TEXT,
         "edhrec_rank": wvcc.DataType.NUMBER,
         "cmc": wvcc.DataType.NUMBER,
+        "text_search": wvcc.DataType.TEXT,
     },
     trainable_properties=[
         "name",
@@ -72,7 +73,7 @@ client.create(
         "added",
         "discarded",
     ],
-    text_search_property_name="oracle_text",
+    text_search_property_name="text_search",
 )
 
 msg.good("Magic The Gathering schema created")

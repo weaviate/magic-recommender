@@ -11,11 +11,11 @@ import time
 # Load environment variables from .env file
 load_dotenv()
 
-msg.divider("Starting ingestion process")
-
 # Configuration
-train_at = 10000
-start_at = 10000
+train_at = 8000
+start_at = -1
+
+msg.divider(f"Starting ingestion process at {start_at} and training at {train_at}")
 
 # Get the service URL from the environment variable
 service_url = os.getenv("SERVICE_URL")
@@ -66,6 +66,7 @@ with open(file_path, "r") as file:
                 "edhrec_rank": card.get("edhrec_rank", 0),
                 "cmc": card.get("cmc", 0),
             }
+            item_properties["text_search"] = str(item_properties)
 
             counter += 1
             if start_at <= counter:

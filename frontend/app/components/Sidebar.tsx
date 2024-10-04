@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { CardType, Interaction } from "@/app/types";
-import { FaInfoCircle } from "react-icons/fa";
-import { GiCardDraw, GiCardRandom, GiCardPlay } from "react-icons/gi";
+import { GiCardDraw } from "react-icons/gi";
 import { AiFillInteraction } from "react-icons/ai";
 import { FaMagic } from "react-icons/fa";
 
@@ -15,17 +14,19 @@ interface SidebarProps {
   cardInDeck: CardType[];
   userId: string;
   handleRemoveFromDeck: (card_id: string) => void;
-  handleDeckClick: (card_id: string) => void;
   interactions: Interaction[];
   handleClearDeck: () => void;
+  fetchInteractions: (userId: string) => void;
+  loadingInteractions: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   cardInDeck,
   userId,
   handleRemoveFromDeck,
-  handleDeckClick,
   handleClearDeck,
+  fetchInteractions,
+  loadingInteractions,
   interactions,
 }) => {
   const [currentView, setCurrentView] = useState<
@@ -47,12 +48,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           width={120}
         />
         <p className="text-base font-bold text-white">Deck Builder</p>
+        <p className="text-[9px] font-light text-zinc-700">{userId}</p>
       </div>
       <div className="divider m-1"></div>
       <div className="flex flex-row gap-2">
         <button
-          className={`btn text-white ${
-            currentView === "Info" ? "bg-white text-black" : "bg-zinc-900"
+          className={`btn ${
+            currentView === "Info"
+              ? "bg-white text-black"
+              : "text-white bg-zinc-900"
           } hover:bg-white hover:text-black border-none`}
           onClick={() => setCurrentView("Info")}
         >
@@ -60,8 +64,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           <p className="text-xs">Welcome</p>
         </button>
         <button
-          className={`btn flex justify-center flex-row gap-2 text-white ${
-            currentView === "Deck" ? "bg-white text-black" : "bg-zinc-900"
+          className={`btn flex justify-center flex-row gap-2  ${
+            currentView === "Deck"
+              ? "bg-white text-black"
+              : " text-white bg-zinc-900"
           } hover:bg-white hover:text-black border-none`}
           onClick={() => setCurrentView("Deck")}
         >
@@ -69,15 +75,25 @@ const Sidebar: React.FC<SidebarProps> = ({
           <p className="text-xs">Deck ({cardInDeck.length})</p>
         </button>
         <button
-          className={`btn flex justify-center flex-row gap-2 text-white ${
+          className={`btn flex justify-center flex-row gap-2 ${
             currentView === "Interactions"
               ? "bg-white text-black"
-              : "bg-zinc-900"
+              : "bg-zinc-900 text-white"
           } hover:bg-white hover:text-black border-none`}
-          onClick={() => setCurrentView("Interactions")}
+          onClick={() => {
+            setCurrentView("Interactions");
+            fetchInteractions(userId);
+          }}
         >
           <AiFillInteraction />
-          <p className="text-xs">Interactions ({interactions.length})</p>
+          <p className="text-xs items-center flex gap-2">
+            Interactions{" "}
+            {loadingInteractions ? (
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : (
+              `(${interactions.length})`
+            )}
+          </p>
         </button>
       </div>
       <div className="divider m-1"></div>
@@ -87,7 +103,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           cardInDeck={cardInDeck}
           userId={userId}
           handleRemoveFromDeck={handleRemoveFromDeck}
-          handleDeckClick={handleDeckClick}
           handleClearDeck={handleClearDeck}
         />
       )}
