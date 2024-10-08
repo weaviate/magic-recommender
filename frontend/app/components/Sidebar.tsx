@@ -18,6 +18,7 @@ interface SidebarProps {
   handleRemoveQuantity: (card_id: string) => void;
   interactions: Interaction[];
   handleClearDeck: () => void;
+  loadingDeck: boolean;
   handleClearInteractions: () => void;
   fetchInteractions: (userId: string) => void;
   loadingInteractions: boolean;
@@ -29,6 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   handleAddQuantity,
   handleRemoveQuantity,
   handleClearDeck,
+  loadingDeck,
   fetchInteractions,
   loadingInteractions,
   interactions,
@@ -77,8 +79,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => setCurrentView("Deck")}
         >
           <GiCardDraw />
-          <p className="text-xs">
-            Deck ({cardInDeck.reduce((sum, card) => sum + card.quantity, 0)})
+          <p className="text-xs items-center flex gap-2">
+            Deck{" "}
+            {loadingDeck ? (
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : (
+              `(${cardInDeck.reduce((sum, card) => sum + card.quantity, 0)})`
+            )}
           </p>
         </button>
         <button

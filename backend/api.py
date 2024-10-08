@@ -110,7 +110,7 @@ async def get_cards(payload: GetCardsPayload):
             },
         )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        msg.fail(f"An error occurred: {str(e)}")
         return JSONResponse(status_code=400, content={"cards": [], "total": 0})
 
 
@@ -135,7 +135,7 @@ async def card_recommendation(payload: CardRecommendationPayload):
                     remove_reference=True,
                 )
         except Exception as e:
-            print(f"Recommendation error: {str(e)}")
+            msg.fail(f"Recommendation error: {str(e)}")
             random_card = await get_random_cards(6)
             return JSONResponse(
                 status_code=200,
@@ -159,7 +159,7 @@ async def card_recommendation(payload: CardRecommendationPayload):
             },
         )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        msg.fail(f"An error occurred: {str(e)}")
         return JSONResponse(status_code=400, content={"cards": [], "total": 0})
 
 
@@ -191,7 +191,7 @@ async def card_search(payload: SearchCardsPayload):
                 )
 
         except Exception as e:
-            print(f"Search error: {str(e)}")
+            msg.fail(f"Search error: {str(e)}")
             random_card = await get_random_cards(6)
             return JSONResponse(
                 status_code=200,
@@ -215,7 +215,7 @@ async def card_search(payload: SearchCardsPayload):
             },
         )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        msg.fail(f"An error occurred: {str(e)}")
         return JSONResponse(status_code=400, content={"cards": [], "total": 0})
 
 
@@ -232,7 +232,7 @@ async def user_recommendation(payload: UserRecommendationPayload):
                 top_n_interactions=100,
             )
         except Exception as e:
-            print(f"Recommendation error: {str(e)}")
+            msg.fail(f"Recommendation error: {str(e)}")
             random_card = await get_random_cards(6)
             return JSONResponse(
                 status_code=200,
@@ -256,7 +256,7 @@ async def user_recommendation(payload: UserRecommendationPayload):
             },
         )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        msg.fail(f"An error occurred: {str(e)}")
         return JSONResponse(status_code=400, content={"cards": [], "total": 0})
 
 
@@ -276,14 +276,14 @@ async def add_interaction(payload: AddInteractionPayload):
             weight=payload.weight,
         )
 
-        print(f"Interaction added: {response}")
+        msg.good(f"Interaction added: {response}")
 
         return JSONResponse(
             status_code=200,
             content=None,
         )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        msg.fail(f"An error occurred: {str(e)}")
         return JSONResponse(status_code=400, content=None)
 
 
@@ -297,7 +297,7 @@ async def get_interactions(payload: GetInteractionsPayload):
         try:
             response = recommender_client.user.get_user_interactions(payload.userId)
         except Exception as e:
-            print(f"An error when getting interactions: {str(e)}")
+            msg.fail(f"An error when getting interactions: {str(e)}")
             return JSONResponse(
                 status_code=200,
                 content=[],
@@ -321,7 +321,7 @@ async def get_interactions(payload: GetInteractionsPayload):
             content=interactions,
         )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        msg.fail(f"An error occurred: {str(e)}")
         return JSONResponse(status_code=400, content=None)
 
 
@@ -334,9 +334,9 @@ async def delete_all_interactions(payload: GetInteractionsPayload):
 
         try:
             response = recommender_client.user.delete_all_interactions(payload.userId)
-            print(f"Interactions deleted: {response}")
+            msg.info(f"Interactions deleted: {response}")
         except Exception as e:
-            print(f"An error when getting interactions: {str(e)}")
+            msg.fail(f"An error when getting interactions: {str(e)}")
             return JSONResponse(
                 status_code=500,
                 content=None,
@@ -347,7 +347,7 @@ async def delete_all_interactions(payload: GetInteractionsPayload):
         )
 
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        msg.fail(f"An error occurred: {str(e)}")
         return JSONResponse(status_code=400, content=None)
 
 
@@ -362,14 +362,14 @@ async def save_deck(payload: SaveDeckPayload):
             id=payload.userId, properties={"decks": payload.deck_string}
         )
         response = recommender_client.user.update_user(updated_user)
-        print(f"Deck saved: {response}")
+        msg.good(f"Deck saved: {response}")
 
         return JSONResponse(
             status_code=200,
             content=None,
         )
     except Exception as e:
-        print(f"An error when saving deck for user: {payload.userId}: {str(e)}")
+        msg.fail(f"An error when saving deck for user: {payload.userId}: {str(e)}")
         return JSONResponse(status_code=500, content=None)
 
 
@@ -381,14 +381,14 @@ async def get_deck(payload: GetInteractionsPayload):
         await user_check(payload.userId)
 
         user = recommender_client.user.get_user(payload.userId)
-        print(f"Deck: {user.properties['decks']}")
+        msg.info(f"Deck: {user.properties['decks']}")
 
         return JSONResponse(
             status_code=200,
             content=user.properties["decks"],
         )
     except Exception as e:
-        print(f"An error when getting deck: {str(e)}")
+        msg.fail(f"An error when getting deck: {str(e)}")
         return JSONResponse(status_code=500, content=None)
 
 
@@ -427,11 +427,11 @@ async def user_check(user_id: str):
         if not recommender_client.user.exists(user_id):
             new_user = User(id=user_id, properties={"decks": ""})
             response = recommender_client.user.create_user(new_user)
-            print(f"User created: {response}")
+            msg.info(f"User created: {response}")
         else:
-            print(f"User {user_id} exists")
+            msg.info(f"User {user_id} exists")
     except Exception as e:
-        print(f"An error occurred when creating user: {str(e)}")
+        msg.fail(f"An error occurred when creating user: {str(e)}")
 
 
 async def get_image_uri(card_id: str):
@@ -442,5 +442,5 @@ async def get_image_uri(card_id: str):
         card_name = response.properties["name"]
         return image_uri, card_name
     except Exception as e:
-        print(f"An error occurred while fetching image URI: {str(e)}")
+        msg.fail(f"An error occurred while fetching image URI: {str(e)}")
         return ""

@@ -22,6 +22,7 @@ export default function Home() {
   const [numberOfCards, setNumberOfCards] = useState(6);
 
   const [loadingInteractions, setLoadingInteractions] = useState(false);
+  const [loadingDeck, setLoadingDeck] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,12 +30,15 @@ export default function Home() {
       if (ipAddress) {
         setUserId(ipAddress);
         fetchInteractions(ipAddress);
+        setLoadingDeck(true);
         const deck = await getDeck(ipAddress);
         if (deck) {
           if (deck.length > 0) {
+            setLoadingDeck(false);
             setCardInDeck(JSON.parse(deck));
           } else {
             setCardInDeck([]);
+            setLoadingDeck(false);
           }
         }
       }
@@ -54,10 +58,11 @@ export default function Home() {
   };
 
   const handleRemoveFromDeck = (card_id: string) => {
-    setCardInDeck(
-      cardInDeck.filter((card) => card.card_type.card_id !== card_id)
+    const updatedDeck = cardInDeck.filter(
+      (card) => card.card_type.card_id !== card_id
     );
-    handleSaveDeck();
+    setCardInDeck(updatedDeck);
+    handleSaveDeck(updatedDeck);
   };
 
   const handleAddToDeck = (card: CardType) => {
@@ -65,16 +70,17 @@ export default function Home() {
       (deckCard) => deckCard.card_type.card_id === card.card_id
     );
 
+    let updatedDeck;
     if (existingCardIndex !== -1) {
       // Card already exists in deck, increase quantity
-      const updatedDeck = [...cardInDeck];
+      updatedDeck = [...cardInDeck];
       updatedDeck[existingCardIndex].quantity += 1;
-      setCardInDeck(updatedDeck);
     } else {
       // Card doesn't exist in deck, add it with quantity 1
-      setCardInDeck([...cardInDeck, { card_type: card, quantity: 1 }]);
+      updatedDeck = [...cardInDeck, { card_type: card, quantity: 1 }];
     }
-    handleSaveDeck();
+    setCardInDeck(updatedDeck);
+    handleSaveDeck(updatedDeck);
   };
 
   const handleAddQuantity = (card_id: string) => {
@@ -105,7 +111,7 @@ export default function Home() {
 
   const handleClearDeck = () => {
     setCardInDeck([]);
-    handleSaveDeck();
+    handleSaveDeck([]);
   };
 
   const handleClearInteractions = () => {
@@ -118,9 +124,11 @@ export default function Home() {
       });
   };
 
-  const handleSaveDeck = async () => {
-    const deckString = JSON.stringify(cardInDeck);
+  const handleSaveDeck = async (_cardInDeck: CardInfo[]) => {
+    setLoadingDeck(true);
+    const deckString = JSON.stringify(_cardInDeck);
     await saveDeck(deckString, userId);
+    setLoadingDeck(false);
   };
 
   return (
@@ -153,6 +161,7 @@ export default function Home() {
           handleRemoveFromDeck={handleRemoveFromDeck}
           fetchInteractions={fetchInteractions}
           loadingInteractions={loadingInteractions}
+          loadingDeck={loadingDeck}
           interactions={interactions}
           handleAddQuantity={handleAddQuantity}
           handleRemoveQuantity={handleRemoveQuantity}
