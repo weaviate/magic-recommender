@@ -9,12 +9,16 @@ interface SearchbarProps {
   userId: string;
   setCards: (cards: CardType[]) => void;
   numberOfCards: number;
+  numberOfInteractions: number;
+  numberOfDeck: number;
 }
 
 const Searchbar: React.FC<SearchbarProps> = ({
   userId,
   setCards,
   numberOfCards,
+  numberOfInteractions,
+  numberOfDeck,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -24,8 +28,14 @@ const Searchbar: React.FC<SearchbarProps> = ({
 
   const handleSearch = (query: string) => {
     setIsSearching(true);
-    getSearchResults(query, userId, numberOfCards, searchType).then((data) => {
-      // Added searchType parameter
+    getSearchResults(
+      query,
+      userId,
+      numberOfCards,
+      numberOfInteractions,
+      numberOfDeck,
+      searchType
+    ).then((data) => {
       if (data) {
         setCards(data.cards);
         setIsSearching(false);

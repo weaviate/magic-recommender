@@ -12,8 +12,8 @@ import time
 load_dotenv()
 
 # Configuration
-train_at = 8000
-start_at = -1
+train_at = -1
+start_at = 10000
 
 msg.divider(f"Starting ingestion process at {start_at} and training at {train_at}")
 
@@ -66,7 +66,32 @@ with open(file_path, "r") as file:
                 "edhrec_rank": card.get("edhrec_rank", 0),
                 "cmc": card.get("cmc", 0),
             }
-            item_properties["text_search"] = str(item_properties)
+
+            trainable_properties = [
+                "name",
+                "released_at",
+                "type_line",
+                "oracle_text",
+                "colors",
+                "keywords",
+                "produced_mana",
+                "set_name",
+                "rarity",
+                "power",
+                "toughness",
+                "mana_cost",
+                "loyalty",
+                "defense",
+                "life_modifier",
+                "hand_modifier",
+                "edhrec_rank",
+                "cmc",
+            ]
+
+            text_search_content = " ".join(
+                str(item_properties.get(prop, "")) for prop in trainable_properties
+            )
+            item_properties["text_search"] = text_search_content
 
             counter += 1
             if start_at <= counter:

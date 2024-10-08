@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { CardType, Interaction, PlaceholderCard } from "@/app/types";
+import { CardType, Interaction, CardInfo } from "@/app/types";
 import Card from "./Card";
 import RecommendationButtons from "./RecommendationButtons";
 
@@ -16,9 +16,8 @@ import {
 } from "@/app/api";
 
 interface CardSelectionProps {
-  cardInDeck: CardType[];
+  cardInDeck: CardInfo[];
   setCardInDeck: (card: CardType) => void;
-  setCardDeck: (cards: CardType[]) => void;
   userId: string;
   fetchInteractions: (userId: string) => void;
   numberOfCards: number;
@@ -29,7 +28,6 @@ interface CardSelectionProps {
 const CardSelection: React.FC<CardSelectionProps> = ({
   cardInDeck,
   setCardInDeck,
-  setCardDeck,
   userId,
   numberOfCards,
   fetchInteractions,
@@ -55,6 +53,7 @@ const CardSelection: React.FC<CardSelectionProps> = ({
   const handleRandomCards = () => {
     setIsLoading(true);
     setCards([]);
+    setSelectedCard(null);
     getRandomCards(pageSize, userId).then((cards) => {
       if (cards) {
         setCards(cards.cards);
@@ -66,7 +65,8 @@ const CardSelection: React.FC<CardSelectionProps> = ({
   const handleDeckRecommendations = () => {
     setIsLoading(true);
     setCards([]);
-    const deckCardIds = cardInDeck.map((card) => card.card_id);
+    setSelectedCard(null);
+    const deckCardIds = cardInDeck.map((card) => card.card_type.card_id);
     getCardRecommendations(pageSize, deckCardIds, userId).then((cards) => {
       if (cards) {
         setCards(cards.cards);
@@ -78,6 +78,7 @@ const CardSelection: React.FC<CardSelectionProps> = ({
   const handleUserRecommendations = () => {
     setIsLoading(true);
     setCards([]);
+    setSelectedCard(null);
     getUserRecommendations(pageSize, userId).then((cards) => {
       if (cards) {
         setCards(cards.cards);
@@ -92,10 +93,12 @@ const CardSelection: React.FC<CardSelectionProps> = ({
     if (cardToAdd) {
       setCardInDeck(cardToAdd);
 
-      // Remove added card from cards
+      // Remove all cards with the matching id from cards
       setCards((prevCards) =>
         prevCards.filter((card) => card.card_id !== card_id)
       );
+
+      setSelectedCard(null);
 
       // Add interaction and get a new recommendation
       Promise.all([
@@ -153,6 +156,11 @@ const CardSelection: React.FC<CardSelectionProps> = ({
           userId={userId}
           setCards={setCards}
           numberOfCards={numberOfCards}
+          numberOfInteractions={interactions.length}
+          numberOfDeck={cardInDeck.reduce(
+            (sum, card) => sum + card.quantity,
+            0
+          )}
         />
         <div className="relative">
           <RecommendationButtons
@@ -177,12 +185,22 @@ const CardSelection: React.FC<CardSelectionProps> = ({
                 preview={false}
                 onAdd={handleAddCard}
                 onDiscard={handleDiscardCard}
+                card_quantity={1}
                 onClick={handleCardClick}
                 selected={selectedCard === card.card_id}
               />
             ))}
         </div>
       </div>
+      <a
+        href="https://weaviate.io"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="footer flex justify-start items-center gap-2 opacity-50"
+      >
+        <img src="/img/weaviate.svg" alt="Weaviate Logo" className="w-[20px]" />
+        <p className="text-xs font-light text-gray-300">Powered by Weaviate</p>
+      </a>
     </div>
   );
 };

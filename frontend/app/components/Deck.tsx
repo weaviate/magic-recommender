@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { CardType } from "@/app/types";
+import { CardInfo } from "@/app/types";
 import Card from "./Card";
 
 interface DeckProps {
-  cardInDeck: CardType[];
+  cardInDeck: CardInfo[];
   userId: string;
-  handleRemoveFromDeck: (card_id: string) => void;
+  handleAddQuantity: (card_id: string) => void;
+  handleRemoveQuantity: (card_id: string) => void;
   handleClearDeck: () => void;
 }
 
 const Deck: React.FC<DeckProps> = ({
   cardInDeck,
-  handleRemoveFromDeck,
+  handleAddQuantity,
+  handleRemoveQuantity,
   handleClearDeck,
 }) => {
   const card_size = 200;
@@ -21,7 +23,11 @@ const Deck: React.FC<DeckProps> = ({
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
   const handleCardClick = (card_id: string) => {
-    setSelectedCard(card_id);
+    if (selectedCard === card_id) {
+      setSelectedCard(null);
+    } else {
+      setSelectedCard(card_id);
+    }
   };
 
   return (
@@ -44,14 +50,15 @@ const Deck: React.FC<DeckProps> = ({
       <div className="grid grid-cols-3 justify-center items-center w-full p-4 gap-2">
         {cardInDeck.map((card) => (
           <Card
-            image_uri={card.image_uri}
+            image_uri={card.card_type.image_uri}
             width={card_size}
-            card_id={card.card_id}
+            card_id={card.card_type.card_id}
+            card_quantity={card.quantity}
             onClick={handleCardClick}
-            selected={selectedCard === card.card_id}
+            selected={selectedCard === card.card_type.card_id}
             preview={true}
-            onAdd={() => {}}
-            onDiscard={handleRemoveFromDeck}
+            onAdd={handleAddQuantity}
+            onDiscard={handleRemoveQuantity}
           />
         ))}
       </div>

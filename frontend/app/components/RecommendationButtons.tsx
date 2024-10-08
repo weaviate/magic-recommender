@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { CardType, Interaction } from "@/app/types";
+import { CardInfo, Interaction } from "@/app/types";
 import { GiCardDraw, GiCardRandom, GiCardPlay } from "react-icons/gi";
 
 import { FaUserTag } from "react-icons/fa";
 import { IoMdAddCircle } from "react-icons/io";
 
 interface RecommendationButtonsProps {
-  cardInDeck: CardType[];
+  cardInDeck: CardInfo[];
   handleDeckRecommendations: () => void;
   handleUserRecommendations: () => void;
   handleRandomCards: () => void;

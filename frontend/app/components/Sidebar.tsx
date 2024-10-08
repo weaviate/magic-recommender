@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CardType, Interaction } from "@/app/types";
+import { CardInfo, Interaction } from "@/app/types";
 import { GiCardDraw } from "react-icons/gi";
 import { AiFillInteraction } from "react-icons/ai";
 import { FaMagic } from "react-icons/fa";
@@ -11,11 +11,14 @@ import Interactions from "./InteractionView";
 import Deck from "./Deck";
 
 interface SidebarProps {
-  cardInDeck: CardType[];
+  cardInDeck: CardInfo[];
   userId: string;
   handleRemoveFromDeck: (card_id: string) => void;
+  handleAddQuantity: (card_id: string) => void;
+  handleRemoveQuantity: (card_id: string) => void;
   interactions: Interaction[];
   handleClearDeck: () => void;
+  handleClearInteractions: () => void;
   fetchInteractions: (userId: string) => void;
   loadingInteractions: boolean;
 }
@@ -23,11 +26,13 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   cardInDeck,
   userId,
-  handleRemoveFromDeck,
+  handleAddQuantity,
+  handleRemoveQuantity,
   handleClearDeck,
   fetchInteractions,
   loadingInteractions,
   interactions,
+  handleClearInteractions,
 }) => {
   const [currentView, setCurrentView] = useState<
     "Deck" | "Info" | "Interactions"
@@ -72,7 +77,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => setCurrentView("Deck")}
         >
           <GiCardDraw />
-          <p className="text-xs">Deck ({cardInDeck.length})</p>
+          <p className="text-xs">
+            Deck ({cardInDeck.reduce((sum, card) => sum + card.quantity, 0)})
+          </p>
         </button>
         <button
           className={`btn flex justify-center flex-row gap-2 ${
@@ -102,12 +109,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         <Deck
           cardInDeck={cardInDeck}
           userId={userId}
-          handleRemoveFromDeck={handleRemoveFromDeck}
+          handleAddQuantity={handleAddQuantity}
+          handleRemoveQuantity={handleRemoveQuantity}
           handleClearDeck={handleClearDeck}
         />
       )}
       {currentView === "Interactions" && (
-        <Interactions interactions={interactions} />
+        <Interactions
+          interactions={interactions}
+          handleClearInteractions={handleClearInteractions}
+        />
       )}
     </div>
   );

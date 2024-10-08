@@ -12,6 +12,7 @@ from .api_types import (
     SearchCardsPayload,
     AddInteractionPayload,
     GetInteractionsPayload,
+    SaveDeckPayload,
 )
 
 import weaviate
@@ -135,7 +136,7 @@ async def card_recommendation(payload: CardRecommendationPayload):
                 )
         except Exception as e:
             print(f"Recommendation error: {str(e)}")
-            random_card = await get_random_cards(1)
+            random_card = await get_random_cards(6)
             return JSONResponse(
                 status_code=200,
                 content={"cards": random_card, "total": len(random_card)},
@@ -165,18 +166,28 @@ async def card_recommendation(payload: CardRecommendationPayload):
 @app.post("/card_search")
 async def card_search(payload: SearchCardsPayload):
     try:
-        msg.info(
-            f"Searching for cards with query: {payload.query} for user: {payload.userId}"
-        )
 
         try:
+
+            influence_factor = 0
+            total_interactions = (
+                payload.numberOfInteractions / 2
+            ) + payload.numberOfDeck
+            influence_factor = max(min(total_interactions / 100, 0.8), 0)
+
+            if payload.numberOfInteractions < 5:
+                influence_factor = 0
+
+            msg.info(
+                f"Searching for cards with query: {payload.query} for user: {payload.userId} with influence factor: {influence_factor} and search type: {payload.searchType}"
+            )
 
             if payload.searchType == "recommended":
                 search_results = recommender_client.search(
                     text=payload.query,
                     user_id=payload.userId,
                     limit=payload.numberOfCards,
-                    influence_factor=0.5,
+                    influence_factor=influence_factor,
                 )
 
         except Exception as e:
@@ -222,7 +233,7 @@ async def user_recommendation(payload: UserRecommendationPayload):
             )
         except Exception as e:
             print(f"Recommendation error: {str(e)}")
-            random_card = await get_random_cards(1)
+            random_card = await get_random_cards(6)
             return JSONResponse(
                 status_code=200,
                 content={"cards": random_card, "total": len(random_card)},
@@ -314,6 +325,73 @@ async def get_interactions(payload: GetInteractionsPayload):
         return JSONResponse(status_code=400, content=None)
 
 
+@app.post("/delete_all_interactions")
+async def delete_all_interactions(payload: GetInteractionsPayload):
+    try:
+        msg.info(f"Deleting all interactions for user: {payload.userId}")
+
+        await user_check(payload.userId)
+
+        try:
+            response = recommender_client.user.delete_all_interactions(payload.userId)
+            print(f"Interactions deleted: {response}")
+        except Exception as e:
+            print(f"An error when getting interactions: {str(e)}")
+            return JSONResponse(
+                status_code=500,
+                content=None,
+            )
+        return JSONResponse(
+            status_code=200,
+            content=None,
+        )
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return JSONResponse(status_code=400, content=None)
+
+
+@app.post("/save_deck")
+async def save_deck(payload: SaveDeckPayload):
+    try:
+        msg.info(f"Saving deck for user: {payload.userId}")
+
+        await user_check(payload.userId)
+
+        updated_user = User(
+            id=payload.userId, properties={"decks": payload.deck_string}
+        )
+        response = recommender_client.user.update_user(updated_user)
+        print(f"Deck saved: {response}")
+
+        return JSONResponse(
+            status_code=200,
+            content=None,
+        )
+    except Exception as e:
+        print(f"An error when saving deck for user: {payload.userId}: {str(e)}")
+        return JSONResponse(status_code=500, content=None)
+
+
+@app.post("/get_deck")
+async def get_deck(payload: GetInteractionsPayload):
+    try:
+        msg.info(f"Getting deck for user: {payload.userId}")
+
+        await user_check(payload.userId)
+
+        user = recommender_client.user.get_user(payload.userId)
+        print(f"Deck: {user.properties['decks']}")
+
+        return JSONResponse(
+            status_code=200,
+            content=user.properties["decks"],
+        )
+    except Exception as e:
+        print(f"An error when getting deck: {str(e)}")
+        return JSONResponse(status_code=500, content=None)
+
+
 async def get_random_cards(num_cards: int = 1):
     card_collection = client.collections.get(os.getenv("COLLECTION_NAME"))
 
@@ -345,19 +423,15 @@ async def get_random_cards(num_cards: int = 1):
 
 
 async def user_check(user_id: str):
-
     try:
-        recommender_client.user.get_user(user_id)
-        print(f"User Exists")
-    except Exception as e:
-        try:
-            print(f"Creating new user")
+        if not recommender_client.user.exists(user_id):
             new_user = User(id=user_id, properties={"decks": ""})
             response = recommender_client.user.create_user(new_user)
             print(f"User created: {response}")
-
-        except Exception as e:
-            print(f"An error occurred when creating user: {str(e)}")
+        else:
+            print(f"User {user_id} exists")
+    except Exception as e:
+        print(f"An error occurred when creating user: {str(e)}")
 
 
 async def get_image_uri(card_id: str):

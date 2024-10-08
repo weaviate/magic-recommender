@@ -30,6 +30,11 @@ export type CardType = {
   cmc: number;
 };
 
+export type CardInfo = {
+  card_type: CardType;
+  quantity: number;
+};
+
 export const PlaceholderCard: CardType = {
   card_id: "",
   oracle_id: "",

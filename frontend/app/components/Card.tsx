@@ -1,11 +1,14 @@
 import React, { useRef, useState, useEffect } from "react";
 import { motion, useSpring, useTransform } from "framer-motion";
 import { IoMdAddCircle, IoMdRemoveCircle } from "react-icons/io";
+import { FaCirclePlus } from "react-icons/fa6";
+import { FaMinusCircle } from "react-icons/fa";
 
 interface CardProps {
   image_uri: string;
   width?: number;
   card_id: string;
+  card_quantity: number;
   onClick: (c_id: string) => void;
   onAdd: (c_id: string) => void;
   onDiscard: (c_id: string) => void;
@@ -17,6 +20,7 @@ const Card: React.FC<CardProps> = ({
   image_uri,
   width,
   card_id,
+  card_quantity,
   onClick,
   onAdd,
   onDiscard,
@@ -127,10 +131,10 @@ const Card: React.FC<CardProps> = ({
           animate={{
             y: 0,
             opacity: 1,
-            scale: selected ? 1.2 : 1,
+            scale: selected ? 1.15 : 1,
             transition: { duration: 1.0 }, // Moved transition here
           }} // Modified animate prop with controlled speed
-          whileHover={{ scale: selected ? 1.2 : 1.1 }}
+          whileHover={{ scale: selected ? 1.15 : 1.1 }}
           transition={{ duration: 0.6, ease: "easeOut" }} // Adjusted transition
         >
           {isLoading && (
@@ -219,8 +223,8 @@ const Card: React.FC<CardProps> = ({
             animate={{ opacity: selected ? 1 : 0, y: selected ? 0 : -10 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
           >
-            <div className="flex gap-2 pointer-events-auto">
-              {!preview && (
+            {!preview && (
+              <div className="flex gap-2 pointer-events-auto">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -231,18 +235,63 @@ const Card: React.FC<CardProps> = ({
                   <IoMdAddCircle size={12} />
                   <p>Add</p>
                 </button>
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDiscard(card_id);
-                }}
-                className="btn text-xs min-w-[120px] btn-error text-white flex items-center gap-1 bg-zinc-600 border-none shadow-2xl"
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDiscard(card_id);
+                  }}
+                  className="btn text-xs min-w-[120px] btn-error text-white flex items-center gap-1 bg-zinc-600 border-none shadow-2xl"
+                >
+                  <IoMdRemoveCircle size={12} />
+                  <p>Discard</p>
+                </button>
+              </div>
+            )}
+            {preview && (
+              <div
+                className="flex flex-col gap-1 pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
               >
-                <IoMdRemoveCircle size={12} />
-                <p>Discard</p>
-              </button>
-            </div>
+                <button
+                  className="btn btn-sm btn-circle w-[40px] h-[40px] bg-zinc-900 text-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAdd(card_id);
+                  }}
+                >
+                  <FaCirclePlus size={20} />
+                </button>
+                <button className="flex w-[40px] h-[40px] justify-center items-center bg-zinc-900 rounded-lg p-3">
+                  <p className="text-xl font-bold text-white">
+                    {card_quantity}
+                  </p>
+                </button>
+                <button
+                  className="btn btn-sm btn-circle w-[40px] h-[40px] bg-zinc-900 text-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDiscard(card_id);
+                  }}
+                >
+                  <FaMinusCircle size={20} />
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {!selected && preview && (
+          <motion.div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {preview && (
+              <div
+                className="flex flex-col gap-1 pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button className="flex w-[20px] h-[20px] justify-center items-center bg-zinc-900 bg-opacity-50 rounded-lg p-3">
+                  <p className="text-sm text-white">{card_quantity}</p>
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
       </div>

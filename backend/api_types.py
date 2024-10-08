@@ -13,10 +13,17 @@ class GetInteractionsPayload(BaseModel):
     userId: str
 
 
+class SaveDeckPayload(BaseModel):
+    userId: str
+    deck_string: str
+
+
 class SearchCardsPayload(BaseModel):
     query: str
     userId: str
     numberOfCards: int
+    numberOfInteractions: int
+    numberOfDeck: int
     searchType: Literal["recommended", "hybrid"]
 
 
