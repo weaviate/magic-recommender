@@ -12,8 +12,8 @@ import time
 load_dotenv()
 
 # Configuration
-train_at = -1
-start_at = 10000
+train_at = 10000
+start_at = -1
 
 msg.divider(f"Starting ingestion process at {start_at} and training at {train_at}")
 
