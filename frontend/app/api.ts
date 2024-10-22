@@ -43,37 +43,11 @@ export const getCurrentIPAddress = async (): Promise<string | null> => {
   }
 };
 
-// Endpoint /cards
-export const getCards = async (
-  page: number,
-  pageSize: number,
-  userId: string
-): Promise<CardsResponse | null> => {
-  try {
-    const host = await detectHost();
-    const response = await fetch(`${host}/cards`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        page: page,
-        pageSize: pageSize,
-        userId: userId,
-      }),
-    });
-    const data: CardsResponse = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error retrieving content", error);
-    return null;
-  }
-};
-
 // Endpoint /random
 export const getRandomCards = async (
   pageSize: number,
-  userId: string
+  userId: string,
+  selectedMana: string[]
 ): Promise<CardsResponse | null> => {
   try {
     const host = await detectHost();
@@ -86,6 +60,7 @@ export const getRandomCards = async (
         page: Math.floor(Math.random() * 1000) + 1,
         pageSize: pageSize,
         userId: userId,
+        selectedMana: selectedMana,
       }),
     });
     const data: CardsResponse = await response.json();
@@ -100,7 +75,8 @@ export const getRandomCards = async (
 export const getCardRecommendations = async (
   numberOfCards: number,
   cardIds: string[],
-  userId: string
+  userId: string,
+  selectedMana: string[]
 ): Promise<CardsResponse | null> => {
   try {
     const host = await detectHost();
@@ -113,6 +89,7 @@ export const getCardRecommendations = async (
         numberOfCards: numberOfCards,
         cardIds: cardIds,
         userId: userId,
+        selectedMana: selectedMana,
       }),
     });
     const data: CardsResponse = await response.json();
@@ -126,7 +103,8 @@ export const getCardRecommendations = async (
 // Endpoint /user_recommendation
 export const getUserRecommendations = async (
   numberOfCards: number,
-  userId: string
+  userId: string,
+  selectedMana: string[]
 ): Promise<CardsResponse | null> => {
   try {
     const host = await detectHost();
@@ -138,6 +116,7 @@ export const getUserRecommendations = async (
       body: JSON.stringify({
         numberOfCards: numberOfCards,
         userId: userId,
+        selectedMana: selectedMana,
       }),
     });
     const data: CardsResponse = await response.json();
@@ -155,7 +134,8 @@ export const getSearchResults = async (
   numberOfCards: number,
   numberOfInteractions: number,
   numberOfDeck: number,
-  searchType: "recommended" | "hybrid"
+  searchType: "recommended" | "hybrid",
+  selectedMana: string[]
 ): Promise<CardsResponse | null> => {
   try {
     const host = await detectHost();
@@ -171,6 +151,7 @@ export const getSearchResults = async (
         numberOfInteractions: numberOfInteractions,
         numberOfDeck: numberOfDeck,
         searchType: searchType,
+        selectedMana: selectedMana,
       }),
     });
     const data: CardsResponse = await response.json();

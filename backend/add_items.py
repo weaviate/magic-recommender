@@ -17,7 +17,7 @@ start_at = -1
 
 msg.divider(f"Starting ingestion process at {start_at} and training at {train_at}")
 
-# Get the service URL from the environment variable
+# Get the service URL and API key from environment variables
 service_url = os.getenv("SERVICE_URL")
 api_key = os.getenv("API_KEY")
 
@@ -27,12 +27,12 @@ client = WeaviateRecommendClient(service_url, api_key)
 file_path = "../dataset/all_cards.jsonl"
 
 # Count total number of lines in the file
-total_lines = sum(1 for _ in open(file_path, "r"))
+with open(file_path, "r") as f:
+    total_lines = sum(1 for _ in f)
 
 batch_size = 1000
 counter = 0
 items = []
-training = False
 
 with open(file_path, "r") as file:
     for line in tqdm(file, total=total_lines, desc="Processing cards"):
@@ -67,46 +67,39 @@ with open(file_path, "r") as file:
                 "cmc": card.get("cmc", 0),
             }
 
-            trainable_properties = [
-                "name",
-                "released_at",
-                "type_line",
-                "oracle_text",
-                "colors",
-                "keywords",
-                "produced_mana",
-                "set_name",
-                "rarity",
-                "power",
-                "toughness",
-                "mana_cost",
-                "loyalty",
-                "defense",
-                "life_modifier",
-                "hand_modifier",
-                "edhrec_rank",
-                "cmc",
-            ]
-
-            text_search_content = " ".join(
-                str(item_properties.get(prop, "")) for prop in trainable_properties
-            )
-            item_properties["text_search"] = text_search_content
-
             counter += 1
             if start_at <= counter:
                 items.append(RecommenderItem(id=card["id"], properties=item_properties))
 
-            if len(items) >= batch_size and not training:
-                response = client.item.add_batch(items)
-                msg.info(response)
+            if len(items) >= batch_size:
+                try:
+                    response = client.item.add_batch(items)
+                    msg.info(response)
+                except Exception as e:
+                    msg.fail(f"Error adding batch: {e}")
+                    exit(1)
                 items = []  # Clear the list after batch insertion
 
             if counter == train_at:
-                training = True
-                response = client.train(overwrite=True)
-                msg.info(response)
+                # Add any remaining items before training
+                if items:
+                    try:
+                        response = client.item.add_batch(items)
+                        msg.info(response)
+                    except Exception as e:
+                        msg.fail(f"Error adding final batch before training: {e}")
+                        exit(1)
+                    items = []
 
+                # Start training
+                try:
+                    response = client.train(overwrite=True)
+                    msg.info(response)
+                except Exception as e:
+                    msg.fail(f"Error starting training: {e}")
+                    exit(1)
+
+                # Wait for training to complete
                 try:
                     while client.is_training():
                         msg.info("Training in progress...")
@@ -129,6 +122,11 @@ with open(file_path, "r") as file:
 
 # Add any remaining items in the last batch
 if items:
-    response = client.item.add_batch(items)
+    try:
+        response = client.item.add_batch(items)
+        msg.info(response)
+    except Exception as e:
+        msg.fail(f"Error adding final batch: {e}")
+        exit(1)
 
 msg.good("Ingestion process completed.")

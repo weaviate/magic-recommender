@@ -16,8 +16,10 @@ api_key = os.getenv("API_KEY")
 
 # Create a client instance
 client = WeaviateRecommendClient(service_url, api_key)
+msg.info("Client created")
 
 client.delete()
+msg.info("Schema deleted")
 
 client.create(
     name="magic_the_gathering_cards",
@@ -46,7 +48,6 @@ client.create(
         "hand_modifier": wvcc.DataType.TEXT,
         "edhrec_rank": wvcc.DataType.NUMBER,
         "cmc": wvcc.DataType.NUMBER,
-        "text_search": wvcc.DataType.TEXT,
     },
     trainable_properties=[
         "name",
@@ -73,7 +74,26 @@ client.create(
         "added",
         "discarded",
     ],
-    text_search_property_name="text_search",
+    text_search_property_name=[
+        "name",
+        "released_at",
+        "type_line",
+        "oracle_text",
+        "colors",
+        "keywords",
+        "produced_mana",
+        "set_name",
+        "rarity",
+        "power",
+        "toughness",
+        "mana_cost",
+        "loyalty",
+        "defense",
+        "life_modifier",
+        "hand_modifier",
+        "edhrec_rank",
+        "cmc",
+    ],
 )
 
 msg.good("Magic The Gathering schema created")

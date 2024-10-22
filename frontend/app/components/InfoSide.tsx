@@ -1,8 +1,6 @@
 "use client";
 
-interface InfoSideProps {}
-
-const InfoSide: React.FC<InfoSideProps> = ({}) => {
+const InfoSide = () => {
   return (
     <div className="justify-start items-start w-full gap-4 flex flex-col p-4">
       <img src="/img/mtg-logo.svg" alt="MTG Logo" className="w-1/2" />
@@ -18,10 +16,10 @@ const InfoSide: React.FC<InfoSideProps> = ({}) => {
       </p>
 
       <p className="text-xs font-light text-gray-300">
-        It makes use of Weaviate's latest Recommending Service, which analyzes
-        your interactions with cards and your deck to create personalized
-        recommendations. For instance, if you're going for a `white vampire
-        deck`, the system will recommend cards that are relevant to that
+        It makes use of the latest Recommending Service by Weaviate, which
+        analyzes your interactions with cards and your deck to create
+        personalized recommendations. For instance, if you are going for a white
+        vampire deck, the system will recommend cards that are relevant to that
         specific theme.
       </p>
 
@@ -31,7 +29,7 @@ const InfoSide: React.FC<InfoSideProps> = ({}) => {
         You start with a random set of cards, which you can either add to your
         deck or discard. Any of these interactions will influence the next
         recommendation, and keeps building up through your interactions. You can
-        search and filter for specific cards that you're looking for, and add
+        search and filter for specific cards that you are looking for, and add
         them to your deck.
       </p>
 

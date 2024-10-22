@@ -50,6 +50,7 @@ const Deck: React.FC<DeckProps> = ({
       <div className="grid grid-cols-3 justify-center items-center w-full p-4 gap-2">
         {cardInDeck.map((card) => (
           <Card
+            key={card.card_type.card_id}
             image_uri={card.card_type.image_uri}
             width={card_size}
             card_id={card.card_type.card_id}

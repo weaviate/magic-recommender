@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { CardInfo, Interaction } from "@/app/types";
-import { GiCardDraw, GiCardRandom, GiCardPlay } from "react-icons/gi";
+import { GiCardDraw, GiCardRandom } from "react-icons/gi";
 
 import { FaUserTag } from "react-icons/fa";
 import { IoMdAddCircle } from "react-icons/io";
@@ -27,7 +27,7 @@ const RecommendationButtons: React.FC<RecommendationButtonsProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const buttonClass =
-    "btn text-white bg-zinc-800 hover:text-black hover:bg-gray-200 text-xs border-none w-full flex items-center justify-evenly";
+    "btn text-white bg-zinc-900 hover:text-black hover:bg-gray-200 text-xs border-none w-full flex items-center justify-evenly";
   const iconClass = "w-[20px] flex justify-center";
 
   const handleRecommendationClick = (action: () => void) => {

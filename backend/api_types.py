@@ -25,20 +25,24 @@ class SearchCardsPayload(BaseModel):
     numberOfInteractions: int
     numberOfDeck: int
     searchType: Literal["recommended", "hybrid"]
+    selectedMana: List[str]
 
 
 class GetCardsPayload(BaseModel):
     pageSize: int
     page: int
     userId: str
+    selectedMana: List[str]
 
 
 class CardRecommendationPayload(BaseModel):
     numberOfCards: int
     cardIds: List[str]
     userId: str
+    selectedMana: List[str]
 
 
 class UserRecommendationPayload(BaseModel):
     numberOfCards: int
     userId: str
+    selectedMana: List[str]

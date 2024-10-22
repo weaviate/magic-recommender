@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { CardType, Interaction, CardInfo } from "@/app/types";
 import Card from "./Card";
 import RecommendationButtons from "./RecommendationButtons";
@@ -21,7 +21,6 @@ interface CardSelectionProps {
   userId: string;
   fetchInteractions: (userId: string) => void;
   numberOfCards: number;
-  setInteractions: (interactions: Interaction[]) => void;
   interactions: Interaction[];
 }
 
@@ -31,30 +30,113 @@ const CardSelection: React.FC<CardSelectionProps> = ({
   userId,
   numberOfCards,
   fetchInteractions,
-  setInteractions,
   interactions,
 }) => {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [cards, setCards] = useState<CardType[]>([]);
+  const [selectedMana, setSelectedMana] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
 
   const pageSize = numberOfCards;
   const card_size = 230;
 
-  const handleCardClick = (card_id: string) => {
-    if (selectedCard === card_id) {
-      setSelectedCard(null);
+  const retrieveRecommendedCards = () => {
+    if (cards.length < pageSize) {
+    }
+    if (cardInDeck.length > 0) {
+      const card_ids = cards.map((card) => card.card_id);
+      getCardRecommendations(
+        pageSize - cards.length,
+        card_ids,
+        userId,
+        selectedMana
+      ).then((newCards) => {
+        if (newCards) {
+          setCards((prevCards) => {
+            const combinedCards = [...prevCards, ...newCards.cards];
+            return combinedCards.length > pageSize
+              ? combinedCards.slice(0, pageSize)
+              : combinedCards;
+          });
+        }
+      });
     } else {
-      setSelectedCard(card_id);
+      getRandomCards(pageSize - cards.length, userId, selectedMana).then(
+        (newCards) => {
+          if (newCards) {
+            setCards((prevCards) => {
+              const combinedCards = [...prevCards, ...newCards.cards];
+              return combinedCards.length > pageSize
+                ? combinedCards.slice(0, pageSize)
+                : combinedCards;
+            });
+          }
+        }
+      );
     }
   };
+
+  const retrieveUserCards = () => {
+    if (interactions.length > 10) {
+      getUserRecommendations(
+        pageSize - cards.length,
+        userId,
+        selectedMana
+      ).then((newCards) => {
+        if (newCards) {
+          setCards((prevCards) => {
+            const combinedCards = [...prevCards, ...newCards.cards];
+            return combinedCards.length > pageSize
+              ? combinedCards.slice(0, pageSize)
+              : combinedCards;
+          });
+        }
+      });
+    } else if (cardInDeck.length > 0) {
+      const card_ids = cards.map((card) => card.card_id);
+      getCardRecommendations(
+        pageSize - cards.length,
+        card_ids,
+        userId,
+        selectedMana
+      ).then((newCards) => {
+        if (newCards) {
+          setCards((prevCards) => {
+            const combinedCards = [...prevCards, ...newCards.cards];
+            return combinedCards.length > pageSize
+              ? combinedCards.slice(0, pageSize)
+              : combinedCards;
+          });
+        }
+      });
+    } else {
+      getRandomCards(pageSize - cards.length, userId, selectedMana).then(
+        (newCards) => {
+          if (newCards) {
+            setCards((prevCards) => {
+              const combinedCards = [...prevCards, ...newCards.cards];
+              return combinedCards.length > pageSize
+                ? combinedCards.slice(0, pageSize)
+                : combinedCards;
+            });
+          }
+        }
+      );
+    }
+  };
+
+  const handleCardClick = React.useCallback((card_id: string) => {
+    setSelectedCard((prevSelectedCard) =>
+      prevSelectedCard === card_id ? null : card_id
+    );
+  }, []);
 
   const handleRandomCards = () => {
     setIsLoading(true);
     setCards([]);
     setSelectedCard(null);
-    getRandomCards(pageSize, userId).then((cards) => {
+    getRandomCards(pageSize, userId, selectedMana).then((cards) => {
       if (cards) {
         setCards(cards.cards);
       }
@@ -67,19 +149,21 @@ const CardSelection: React.FC<CardSelectionProps> = ({
     setCards([]);
     setSelectedCard(null);
     const deckCardIds = cardInDeck.map((card) => card.card_type.card_id);
-    getCardRecommendations(pageSize, deckCardIds, userId).then((cards) => {
-      if (cards) {
-        setCards(cards.cards);
+    getCardRecommendations(pageSize, deckCardIds, userId, selectedMana).then(
+      (cards) => {
+        if (cards) {
+          setCards(cards.cards);
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    });
+    );
   };
 
   const handleUserRecommendations = () => {
     setIsLoading(true);
     setCards([]);
     setSelectedCard(null);
-    getUserRecommendations(pageSize, userId).then((cards) => {
+    getUserRecommendations(pageSize, userId, selectedMana).then((cards) => {
       if (cards) {
         setCards(cards.cards);
       }
@@ -100,20 +184,11 @@ const CardSelection: React.FC<CardSelectionProps> = ({
 
       setSelectedCard(null);
 
-      // Add interaction and get a new recommendation
-      Promise.all([
-        addInteraction(card_id, userId, "added", 0.8),
-        getCardRecommendations(1, [card_id], userId),
-      ])
-        .then(([_, newCards]) => {
-          if (newCards && newCards.cards.length > 0) {
-            setCards((prevCards) => [...prevCards, newCards.cards[0]]);
-          }
-          fetchInteractions(userId);
-        })
-        .catch((error) => {
-          console.error("Error adding card:", error);
-        });
+      addInteraction(card_id, userId, "added", 0.8).then(() => {
+        fetchInteractions(userId);
+      });
+
+      retrieveRecommendedCards();
     }
   };
 
@@ -121,31 +196,18 @@ const CardSelection: React.FC<CardSelectionProps> = ({
     const cardToRemove = cards.find((card) => card.card_id === card_id);
     if (cardToRemove) {
       setCards(cards.filter((card) => card.card_id !== card_id));
+
       addInteraction(card_id, userId, "discarded", -0.8).then(() => {
-        getInteractions(userId).then((newInteractions) => {
-          if (newInteractions) {
-            setInteractions(newInteractions);
-          }
-        });
+        fetchInteractions(userId);
       });
-      getUserRecommendations(1, userId).then((cards) => {
-        if (cards) {
-          setCards((prevCards) => [...prevCards, ...cards.cards]);
-        }
-      });
+
+      retrieveUserCards();
     }
   };
 
   useEffect(() => {
     if (userId) {
-      const fetchData = async () => {
-        getRandomCards(pageSize, userId).then((cards) => {
-          if (cards) {
-            setCards(cards.cards);
-          }
-        });
-      };
-      fetchData();
+      retrieveUserCards();
     }
   }, [userId]);
 
@@ -157,28 +219,26 @@ const CardSelection: React.FC<CardSelectionProps> = ({
           setCards={setCards}
           numberOfCards={numberOfCards}
           numberOfInteractions={interactions.length}
+          isLoading={isLoading}
+          cardInDeck={cardInDeck}
+          handleDeckRecommendations={handleDeckRecommendations}
+          handleUserRecommendations={handleUserRecommendations}
+          handleRandomCards={handleRandomCards}
+          interactions={interactions}
+          selectedMana={selectedMana}
+          setSelectedMana={setSelectedMana}
           numberOfDeck={cardInDeck.reduce(
             (sum, card) => sum + card.quantity,
             0
           )}
         />
-        <div className="relative">
-          <RecommendationButtons
-            isLoading={isLoading}
-            cardInDeck={cardInDeck}
-            handleDeckRecommendations={handleDeckRecommendations}
-            handleUserRecommendations={handleUserRecommendations}
-            handleRandomCards={handleRandomCards}
-            interactions={interactions}
-          />
-        </div>
       </div>
-      <div className="flex-grow flex items-start justify-center pt-16">
-        <div className="flex flex-wrap gap-6 items-start justify-center mt-4">
+      <div className="flex-grow flex items-start justify-center pt-16 mt-14">
+        <div className="grid grid-cols-3 gap-12 items-start justify-center mt-4 overflow-y-auto h-[80vh] p-4">
           {cards &&
-            cards.map((card) => (
+            cards.map((card, index) => (
               <Card
-                key={card.card_id}
+                key={`${card.card_id}-${index}`}
                 image_uri={card.image_uri}
                 width={card_size}
                 card_id={card.card_id}
@@ -192,15 +252,6 @@ const CardSelection: React.FC<CardSelectionProps> = ({
             ))}
         </div>
       </div>
-      <a
-        href="https://weaviate.io"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="footer flex justify-start items-center gap-2 opacity-50"
-      >
-        <img src="/img/weaviate.svg" alt="Weaviate Logo" className="w-[20px]" />
-        <p className="text-xs font-light text-gray-300">Powered by Weaviate</p>
-      </a>
     </div>
   );
 };

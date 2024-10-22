@@ -1,6 +1,5 @@
 export type CardsResponse = {
   cards: CardType[];
-  total: number;
 };
 
 export type CardType = {

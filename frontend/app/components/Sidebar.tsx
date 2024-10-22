@@ -20,7 +20,6 @@ interface SidebarProps {
   handleClearDeck: () => void;
   loadingDeck: boolean;
   handleClearInteractions: () => void;
-  fetchInteractions: (userId: string) => void;
   loadingInteractions: boolean;
 }
 
@@ -31,7 +30,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   handleRemoveQuantity,
   handleClearDeck,
   loadingDeck,
-  fetchInteractions,
   loadingInteractions,
   interactions,
   handleClearInteractions,
@@ -96,7 +94,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           } hover:bg-white hover:text-black border-none`}
           onClick={() => {
             setCurrentView("Interactions");
-            fetchInteractions(userId);
           }}
         >
           <AiFillInteraction />

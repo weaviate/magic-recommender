@@ -1,6 +1,5 @@
 "use client";
 
-import Card from "@/app/components/Card";
 import CardSelection from "@/app/components/CardSelection";
 
 import {
@@ -19,7 +18,7 @@ export default function Home() {
   const [cardInDeck, setCardInDeck] = useState<CardInfo[]>([]);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
 
-  const [numberOfCards, setNumberOfCards] = useState(6);
+  const numberOfCards = 15;
 
   const [loadingInteractions, setLoadingInteractions] = useState(false);
   const [loadingDeck, setLoadingDeck] = useState(false);
@@ -40,6 +39,9 @@ export default function Home() {
             setCardInDeck([]);
             setLoadingDeck(false);
           }
+        } else {
+          setCardInDeck([]);
+          setLoadingDeck(false);
         }
       }
     };
@@ -49,10 +51,12 @@ export default function Home() {
   const fetchInteractions = async (userId: string) => {
     setLoadingInteractions(true);
     const interactions = await getInteractions(userId);
+    console.log(interactions);
     if (interactions) {
       setInteractions(interactions);
       setLoadingInteractions(false);
     } else {
+      setInteractions([]);
       setLoadingInteractions(false);
     }
   };
@@ -136,7 +140,7 @@ export default function Home() {
       <div className="flex justify-center items-center">
         {/* Main Page */}
         <div
-          className="flex flex-col p-4 gap-4 h-screen w-2/3 overflow-y-auto"
+          className="flex flex-col p-4 gap-4 h-screen w-2/3"
           style={{
             backgroundImage: "url('/img/background.png')",
             backgroundSize: "cover",
@@ -149,7 +153,6 @@ export default function Home() {
             numberOfCards={numberOfCards}
             interactions={interactions}
             setCardInDeck={handleAddToDeck}
-            setInteractions={setInteractions}
             userId={userId}
             fetchInteractions={fetchInteractions}
           />
@@ -159,7 +162,6 @@ export default function Home() {
           cardInDeck={cardInDeck}
           userId={userId}
           handleRemoveFromDeck={handleRemoveFromDeck}
-          fetchInteractions={fetchInteractions}
           loadingInteractions={loadingInteractions}
           loadingDeck={loadingDeck}
           interactions={interactions}

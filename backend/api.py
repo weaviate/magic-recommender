@@ -2,8 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from weaviate.classes.query import Filter
 import random
-
+import time
 
 from .api_types import (
     GetCardsPayload,
@@ -20,6 +21,8 @@ from weaviate.auth import AuthApiKey
 from weaviate.classes.init import AdditionalConfig, Timeout
 from weaviate.classes.query import Sort
 from weaviate_recommend.models.data import User
+from weaviate_recommend.models.filter import FilterConfig
+
 
 import os
 
@@ -79,19 +82,23 @@ async def get_cards(payload: GetCardsPayload):
 
         offset = payload.pageSize * (payload.page - 1)
         card_collection = client.collections.get(os.getenv("COLLECTION_NAME"))
-        aggregation_response = await card_collection.aggregate.over_all(
-            total_count=True
-        )
 
-        if aggregation_response.total_count == 0:
-            msg.warn("No cards found")
-            return JSONResponse(status_code=200, content={"cards": [], "total": 0})
-
-        response = await card_collection.query.fetch_objects(
-            limit=payload.pageSize,
-            offset=offset,
-            sort=Sort.by_property("name", ascending=True),
-        )
+        selected_mana = payload.selectedMana
+        if len(selected_mana) > 0:
+            filters = Filter.by_property("color_identity").contains_all(selected_mana)
+            response = await card_collection.query.fetch_objects(
+                limit=2000,
+                sort=Sort.by_property("name", ascending=True),
+                filters=filters,
+            )
+            random.shuffle(response.objects)
+            response.objects = response.objects[: payload.pageSize]
+        else:
+            response = await card_collection.query.fetch_objects(
+                limit=payload.pageSize,
+                offset=offset,
+                sort=Sort.by_property("name", ascending=True),
+            )
 
         cards = [
             {
@@ -106,20 +113,28 @@ async def get_cards(payload: GetCardsPayload):
             status_code=200,
             content={
                 "cards": cards,
-                "total": aggregation_response.total_count,
             },
         )
     except Exception as e:
         msg.fail(f"An error occurred: {str(e)}")
-        return JSONResponse(status_code=400, content={"cards": [], "total": 0})
+        return JSONResponse(status_code=400, content={"cards": []})
 
 
 @app.post("/card_recommendation")
 async def card_recommendation(payload: CardRecommendationPayload):
     try:
-        msg.info(
-            f"Getting card recommendations for cards: {payload.cardIds} from user: {payload.userId}"
-        )
+        msg.info(f"Getting card recommendations from user: {payload.userId}")
+
+        if len(payload.selectedMana) > 0:
+            filters = [
+                FilterConfig(
+                    property_name="color_identity",
+                    operator="ContainsAll",
+                    value=payload.selectedMana,
+                )
+            ]
+        else:
+            filters = None
 
         try:
             if len(payload.cardIds) == 1:
@@ -127,12 +142,14 @@ async def card_recommendation(payload: CardRecommendationPayload):
                     item_id=payload.cardIds[0],
                     limit=payload.numberOfCards,
                     remove_reference=True,
+                    filters=filters,
                 )
             else:
                 recommendations = recommender_client.recommendation.item.from_items(
                     item_ids=payload.cardIds,
                     limit=payload.numberOfCards,
                     remove_reference=True,
+                    filters=filters,
                 )
         except Exception as e:
             msg.fail(f"Recommendation error: {str(e)}")
@@ -182,13 +199,24 @@ async def card_search(payload: SearchCardsPayload):
                 f"Searching for cards with query: {payload.query} for user: {payload.userId} with influence factor: {influence_factor} and search type: {payload.searchType}"
             )
 
-            if payload.searchType == "recommended":
-                search_results = recommender_client.search(
-                    text=payload.query,
-                    user_id=payload.userId,
-                    limit=payload.numberOfCards,
-                    influence_factor=influence_factor,
-                )
+            if len(payload.selectedMana) > 0:
+                filters = [
+                    FilterConfig(
+                        property_name="color_identity",
+                        operator="ContainsAll",
+                        value=payload.selectedMana,
+                    )
+                ]
+            else:
+                filters = None
+
+            search_results = recommender_client.search(
+                text=payload.query,
+                user_id=payload.userId,
+                limit=payload.numberOfCards,
+                influence_factor=influence_factor,
+                filters=filters,
+            )
 
         except Exception as e:
             msg.fail(f"Search error: {str(e)}")
@@ -224,6 +252,17 @@ async def user_recommendation(payload: UserRecommendationPayload):
     try:
         msg.info(f"Getting user recommendations for user: {payload.userId}")
 
+        if len(payload.selectedMana) > 0:
+            filters = [
+                FilterConfig(
+                    property_name="color_identity",
+                    operator="ContainsAll",
+                    value=payload.selectedMana,
+                )
+            ]
+        else:
+            filters = None
+
         try:
             recommendations = recommender_client.recommendation.item.from_user(
                 user_id=payload.userId,
@@ -233,10 +272,10 @@ async def user_recommendation(payload: UserRecommendationPayload):
             )
         except Exception as e:
             msg.fail(f"Recommendation error: {str(e)}")
-            random_card = await get_random_cards(6)
+            random_card = await get_random_cards(1)
             return JSONResponse(
                 status_code=200,
-                content={"cards": random_card, "total": len(random_card)},
+                content={"cards": random_card, "total": 1},
             )
 
         cards = [
@@ -295,7 +334,15 @@ async def get_interactions(payload: GetInteractionsPayload):
         await user_check(payload.userId)
 
         try:
+
+            start_time = time.time()
+
             response = recommender_client.user.get_user_interactions(payload.userId)
+
+            end_time = time.time()
+            msg.info(
+                f"Time taken to get interactions for user {payload.userId}: {end_time - start_time} seconds"
+            )
         except Exception as e:
             msg.fail(f"An error when getting interactions: {str(e)}")
             return JSONResponse(
@@ -303,16 +350,17 @@ async def get_interactions(payload: GetInteractionsPayload):
                 content=[],
             )
 
+        item_ids = set([interaction.item_id for interaction in response])
+        card_info = await get_image_uris(item_ids)
         interactions = []
         for interaction in response:
-            image_uri, card_name = await get_image_uri(interaction.item_id)
             interactions.append(
                 {
                     "item_id": interaction.item_id,
-                    "name": card_name,
+                    "name": card_info[interaction.item_id]["name"],
                     "interaction_property_name": interaction.interaction_property_name,
                     "weight": interaction.weight,
-                    "image_uri": image_uri,
+                    "image_uri": card_info[interaction.item_id]["image_uri"],
                 }
             )
 
@@ -376,12 +424,16 @@ async def save_deck(payload: SaveDeckPayload):
 @app.post("/get_deck")
 async def get_deck(payload: GetInteractionsPayload):
     try:
+        start_time = time.time()
         msg.info(f"Getting deck for user: {payload.userId}")
 
         await user_check(payload.userId)
 
         user = recommender_client.user.get_user(payload.userId)
-        msg.info(f"Deck: {user.properties['decks']}")
+        end_time = time.time()
+        msg.info(
+            f"Time taken to get deck for user {payload.userId}: {end_time - start_time} seconds"
+        )
 
         return JSONResponse(
             status_code=200,
@@ -423,6 +475,7 @@ async def get_random_cards(num_cards: int = 1):
 
 
 async def user_check(user_id: str):
+    start_time = time.time()
     try:
         if not recommender_client.user.exists(user_id):
             new_user = User(id=user_id, properties={"decks": ""})
@@ -432,15 +485,29 @@ async def user_check(user_id: str):
             msg.info(f"User {user_id} exists")
     except Exception as e:
         msg.fail(f"An error occurred when creating user: {str(e)}")
+    end_time = time.time()
+    msg.info(f"Time taken for user check: {end_time - start_time} seconds")
 
 
-async def get_image_uri(card_id: str):
+async def get_image_uris(card_ids: list[str]):
+    start_time = time.time()
     try:
         card_collection = client.collections.get(os.getenv("COLLECTION_NAME"))
-        response = await card_collection.query.fetch_object_by_id(uuid=card_id)
-        image_uri = response.properties["image_uri"]
-        card_name = response.properties["name"]
-        return image_uri, card_name
+        response = await card_collection.query.fetch_objects_by_ids(
+            card_ids, limit=len(card_ids)
+        )
+        card_info = {}
+        for object in response.objects:
+            card_info[str(object.properties["card_id"])] = {
+                "image_uri": object.properties["image_uri"],
+                "name": object.properties["name"],
+            }
+
+        end_time = time.time()
+        msg.info(f"Time taken to fetch image URIs: {end_time - start_time} seconds")
+        return card_info
     except Exception as e:
         msg.fail(f"An error occurred while fetching image URI: {str(e)}")
-        return ""
+        end_time = time.time()
+        msg.info(f"Time taken to fetch image URIs: {end_time - start_time} seconds")
+        return {}
