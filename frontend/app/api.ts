@@ -1,9 +1,6 @@
 "use server";
 
 import { CardsResponse, Interaction } from "./types";
-import { v5 as uuidv5 } from "uuid";
-
-const NAMESPACE = "10bca8d5-4b85-4a5f-9fb2-5d9c1b9b5e96";
 
 const checkUrl = async (url: string): Promise<boolean> => {
   try {
@@ -30,18 +27,6 @@ export const detectHost = async (): Promise<string> => {
   }
 
   throw new Error("Both health checks failed, please check the Magic Server");
-};
-
-export const getCurrentIPAddress = async (): Promise<string | null> => {
-  try {
-    const response = await fetch("https://api.ipify.org?format=json");
-    const data = await response.json();
-    const uuid = uuidv5(data.ip, NAMESPACE);
-    return uuid;
-  } catch (error) {
-    console.error("Error fetching IP address:", error);
-    return null;
-  }
 };
 
 // Endpoint /random

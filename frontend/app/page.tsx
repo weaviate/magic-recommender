@@ -1,9 +1,9 @@
 "use client";
 
 import CardSelection from "@/app/components/CardSelection";
+import { v5 as uuidv5 } from "uuid";
 
 import {
-  getCurrentIPAddress,
   getInteractions,
   deleteAllInteractions,
   saveDeck,
@@ -22,6 +22,20 @@ export default function Home() {
 
   const [loadingInteractions, setLoadingInteractions] = useState(false);
   const [loadingDeck, setLoadingDeck] = useState(false);
+
+  const NAMESPACE = "10bca8d5-4b85-4a5f-9fb2-5d9c1b9b5e96";
+
+  const getCurrentIPAddress = async (): Promise<string | null> => {
+    try {
+      const response = await fetch("https://api.ipify.org?format=json");
+      const data = await response.json();
+      const uuid = uuidv5(data.ip, NAMESPACE);
+      return uuid;
+    } catch (error) {
+      console.error("Error fetching IP address:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
