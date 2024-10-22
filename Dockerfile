@@ -18,8 +18,8 @@ COPY backend/ ./backend/
 # Copy frontend files
 COPY frontend/ ./frontend/
 
-# Copy env files
-COPY .env/ ./
+# Copy env files if they exist
+COPY --chown=root:root .env* ./
 
 # Install backend dependencies
 RUN pip install --no-cache-dir -r backend/requirements.txt
