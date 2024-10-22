@@ -1,14 +1,35 @@
+"use server";
+
 import { CardsResponse, Interaction } from "./types";
 import { v5 as uuidv5 } from "uuid";
 
 const NAMESPACE = "10bca8d5-4b85-4a5f-9fb2-5d9c1b9b5e96";
 
-export const detectHost = async (): Promise<string> => {
-  const apiBaseUrl = process.env.API_BASE_URL;
-  if (!apiBaseUrl) {
-    throw new Error("API_BASE_URL is not defined");
+const checkUrl = async (url: string): Promise<boolean> => {
+  try {
+    const response = await fetch(url);
+    return response.ok;
+  } catch (error) {
+    console.error(`Failed to fetch from ${url}:`, error);
+    return false;
   }
-  return apiBaseUrl;
+};
+
+export const detectHost = async (): Promise<string> => {
+  const localUrl = "http://localhost:8000/health";
+  const rootUrl = "http://127.0.0.1:8000/health";
+
+  const isLocalHealthy = await checkUrl(localUrl);
+  if (isLocalHealthy) {
+    return "http://localhost:8000";
+  }
+
+  const isRootHealthy = await checkUrl(rootUrl);
+  if (isRootHealthy) {
+    return "http://127.0.0.1:8000";
+  }
+
+  throw new Error("Both health checks failed, please check the Magic Server");
 };
 
 export const getCurrentIPAddress = async (): Promise<string | null> => {

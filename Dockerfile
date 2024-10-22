@@ -18,6 +18,9 @@ COPY backend/ ./backend/
 # Copy frontend files
 COPY frontend/ ./frontend/
 
+# Copy env files
+COPY .env/ ./
+
 # Install backend dependencies
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
@@ -26,8 +29,8 @@ RUN cd frontend && \
     npm install && \
     npm run build
 
-# Expose the port (Render uses PORT environment variable)
-ENV PORT=10000
+# Expose the port 3000 to the outside
+EXPOSE 3000
 
 # Copy the start script
 COPY start.sh /start.sh
