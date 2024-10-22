@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { CardType, Interaction, CardInfo } from "@/app/types";
 import Card from "./Card";
-import RecommendationButtons from "./RecommendationButtons";
 
 import Searchbar from "./Searchbar";
 
@@ -12,7 +11,6 @@ import {
   getCardRecommendations,
   getUserRecommendations,
   addInteraction,
-  getInteractions,
 } from "@/app/api";
 
 interface CardSelectionProps {

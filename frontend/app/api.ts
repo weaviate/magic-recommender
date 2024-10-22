@@ -3,32 +3,12 @@ import { v5 as uuidv5 } from "uuid";
 
 const NAMESPACE = "10bca8d5-4b85-4a5f-9fb2-5d9c1b9b5e96";
 
-const checkUrl = async (url: string): Promise<boolean> => {
-  try {
-    const response = await fetch(url);
-    return response.ok;
-  } catch (error) {
-    console.error(`Failed to fetch from ${url}:`, error);
-    return false;
-  }
-};
-
 export const detectHost = async (): Promise<string> => {
-  const localUrl = "http://localhost:8000/health";
-  const rootUrl = "/health";
-
-  const isLocalHealthy = await checkUrl(localUrl);
-  if (isLocalHealthy) {
-    return "http://localhost:8000";
+  const apiBaseUrl = process.env.API_BASE_URL;
+  if (!apiBaseUrl) {
+    throw new Error("API_BASE_URL is not defined");
   }
-
-  const isRootHealthy = await checkUrl(rootUrl);
-  if (isRootHealthy) {
-    const root = window.location.origin;
-    return root;
-  }
-
-  throw new Error("Both health checks failed, please check the Verba Server");
+  return apiBaseUrl;
 };
 
 export const getCurrentIPAddress = async (): Promise<string | null> => {
